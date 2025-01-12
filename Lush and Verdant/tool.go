@@ -94,15 +94,19 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
+type Useemail struct {
+	EmailName string `json:"email_name"`
+}
+
 // @Summary 发送验证码邮件
 // @Description 向用户邮箱发送验证码
 // @Tags 邮件相关
 // @Accept json
 // @Produce json
-// @Param email body Email true "邮箱发送验证码信息"
+// @Param email body Useemail true "邮箱发送验证码信息"
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
-// @Router /send-email [post]
+// @Router /user/send_email [post]
 func Send_Email(c *gin.Context) {
 	var email Email
 	var count int = 0
@@ -117,21 +121,21 @@ func Send_Email(c *gin.Context) {
 	code := GenerateCode()
 	email.Code = code
 	//发送验证码
-	err := SendEmail(email.Name, code)
+	err := SendEmail(email.EmailName, code)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"message": err.Error(),
 		})
 		return
 	}
-	err = db.QueryRow("select count(*) from email where emailname = ?", email.Name).Scan(&count)
+	err = db.QueryRow("select count(*) from email where emailname = ?", email.EmailName).Scan(&count)
 	if err != nil {
 		c.JSON(400, Response{Error: err.Error()})
 
 		return
 	}
 	if count == 0 {
-		_, err = db.Exec("insert email (emailname, code, status) values (?, ?, ?)", email.Name, code, "valid")
+		_, err = db.Exec("insert email (emailname, code, status) values (?, ?, ?)", email.EmailName, code, "valid")
 		if err != nil {
 			c.JSON(400, gin.H{
 				"message": err.Error(),
@@ -139,7 +143,7 @@ func Send_Email(c *gin.Context) {
 			return
 		}
 	} else {
-		_, err = db.Exec("update email set code = ?,status = ? where emailname = ?", code, "valid", email.Name)
+		_, err = db.Exec("update email set code = ?,status = ? where emailname = ?", code, "valid", email.EmailName)
 		if err != nil {
 			c.JSON(400, Response{Error: err.Error()})
 			return
@@ -149,7 +153,7 @@ func Send_Email(c *gin.Context) {
 	//5分钟后删除验证码
 	delay := 5 * time.Minute
 	time.AfterFunc(delay, func() {
-		_, err = db.Exec("update email set status=? where emailname = ? and status = ?", "expired", email.Name, "valid")
+		_, err = db.Exec("update email set status=? where emailname = ? and status = ?", "expired", email.EmailName, "valid")
 	})
 	c.JSON(200, Response{Message: "发送成功"})
 
@@ -163,25 +167,35 @@ func Send_Email(c *gin.Context) {
 // @Param user body UserRegister true "用户注册信息"
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
-// @Router /register [post]
+// @Router /user/register [post]
 func Register(c *gin.Context) {
 	var user UserRegister
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(400, Response{Message: err.Error()})
+		return
 	}
 	var code_str string
-	err := db.QueryRow("select code from email where emailname = ?", user.Email).Scan(&code_str)
+	var status string
+	err := db.QueryRow("select code,status from email where emailname = ?", user.Email).Scan(&code_str, &status)
 	if err != nil {
 		c.JSON(400, Response{Message: err.Error()})
+		return
+	}
+	if status != "valid" {
+		c.JSON(400, Response{Message: "验证码已失效"})
+		return
 	}
 
 	code_num, err := strconv.Atoi(code_str)
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 	userCode, err := strconv.Atoi(user.Code)
+	fmt.Println(user.Code)
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 	if code_num == userCode {
 		log.Printf("用户 %s 验证成功！", user.Email)
@@ -189,7 +203,15 @@ func Register(c *gin.Context) {
 	_, err = db.Exec("insert  user (username,password,device_num,email) values (?, ?, ?, ?)", user.Username, user.Password, user.Device_Num, user.Email)
 	if err != nil {
 		c.JSON(400, Response{Message: err.Error()})
+		return
 	}
+
+	c.JSON(200, Response{Message: "注册成功"})
+}
+
+type Login struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // @Summary 用户登录（密码方式）
@@ -197,10 +219,10 @@ func Register(c *gin.Context) {
 // @Tags 用户相关
 // @Accept json
 // @Produce json
-// @Param user body UserLogin true "用户登录信息"
+// @Param user body Login true "用户登录信息"
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
-// @Router /login/password [post]
+// @Router /user/login_p [post]
 func Login_P(c *gin.Context) { // 用户用密码登录
 	var user UserLogin
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -236,22 +258,26 @@ func Login_P(c *gin.Context) { // 用户用密码登录
 	}
 }
 
+type VLogin struct {
+	Device_Num string `json:"device_num"`
+}
+
 // @Summary 游客登录
 // @Description 游客通过设备号进行登录，如果该设备号尚未注册，则会创建一个新用户并返回 JWT Token
 // @Tags 用户相关
 // @Accept json
 // @Produce json
-// @Param vister body VisterLogin true "游客登录信息"
+// @Param vister body VLogin true "游客登录信息"
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
-// @Router /login/visitor [post]
+// @Router /user/login_v [post]
 func Login_V(c *gin.Context) { //游客登录
-	var vister VisterLogin
+	var vister VisiterLogin
 	if err := c.ShouldBindJSON(&vister); err != nil {
 		c.JSON(400, Response{Message: err.Error()})
 		return
 	}
-	_, err := db.Exec("insert user_v (device_num) values (?)", vister.Device_Num)
+	_, err := db.Exec("insert user (device_num) values (?)", vister.Device_Num)
 	//unique约束
 	if err != nil {
 		if driverErr, ok := err.(*mysql.MySQLError); ok {
@@ -272,14 +298,14 @@ func Login_V(c *gin.Context) { //游客登录
 		log.Printf("用户设备号为 %s 注册成功", vister.Device_Num)
 	}
 	var id int
-	err = db.QueryRow("select id from user_v where device_num = ?", vister.Device_Num).Scan(&id)
+	err = db.QueryRow("select id from user where device_num = ?", vister.Device_Num).Scan(&id)
 	if err != nil {
 		c.JSON(400, Response{Message: "登录出错" + err.Error()})
 		return
 	}
 	//保存数据库
 	username := pri + strconv.Itoa(id)
-	_, err = db.Exec("update user_v set username = ? where device_num = ?", username, vister.Device_Num)
+	_, err = db.Exec("update user set username = ? where device_num = ?", username, vister.Device_Num)
 	token, err := GenerateToken(id)
 	if err != nil {
 		c.JSON(400, Response{Message: err.Error()})
@@ -296,7 +322,7 @@ func Login_V(c *gin.Context) { //游客登录
 // @Param alter body AlterPassword true "修改密码信息"
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
-// @Router /alter/password [post]
+// @Router /user/login/forget_alter [post]
 func ForAlt(c *gin.Context) { //忘记密码、修改密码
 	var alter AlterPassword
 	if err := c.ShouldBindJSON(&alter); err != nil {
@@ -304,9 +330,14 @@ func ForAlt(c *gin.Context) { //忘记密码、修改密码
 		return
 	}
 	var code_str string
-	err := db.QueryRow("select code from email where emailname = ?", alter.Email).Scan(&code_str)
+	var status string
+	err := db.QueryRow("select code,status from email where emailname = ?", alter.Email).Scan(&code_str, &status)
 	if err != nil {
 		c.JSON(400, Response{Message: err.Error()})
+		return
+	}
+	if status != "valid" {
+		c.JSON(400, Response{Message: "验证码已失效"})
 		return
 	}
 
@@ -348,7 +379,7 @@ func Alter_In(c *gin.Context) {
 // @Param cancel body CancelUser true "注销账户信息"
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
-// @Router /cancel/account [post]
+// @Router /user/cancel [post]
 func Cancel_In(c *gin.Context) { // 注销账户
 	var cancel CancelUser
 	if err := c.ShouldBindJSON(&cancel); err != nil {

@@ -15,9 +15,14 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/alter/password": {
-            "post": {
-                "description": "用户通过邮箱和验证码修改密码，验证码有效后可以修改密码。",
+        "/courage_words/change_word": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "用户可以通过此接口更新他们的口号",
                 "consumes": [
                     "application/json"
                 ],
@@ -25,37 +30,213 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "用户相关"
+                    "用户"
                 ],
-                "summary": "忘记密码和修改密码",
+                "summary": "更新用户的口号",
                 "parameters": [
                     {
-                        "description": "修改密码信息",
-                        "name": "alter",
+                        "description": "新的口号内容",
+                        "name": "newSlogan",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.AlterPassword"
+                            "$ref": "#/definitions/main.Newslogan"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/main.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/main.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "请求错误",
                         "schema": {
-                            "$ref": "#/definitions/main.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/main.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "未找到",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/main.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/main.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
             }
         },
-        "/cancel/account": {
+        "/courage_words/get_word/{device}": {
+            "get": {
+                "description": "通过设备号获取激励语，如果设备尚未设置激励语，则为其分配一个",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "获取设备的激励语",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设备号",
+                        "name": "device",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/main.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "设备号不能为空",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/main.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "未找到激励语",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/main.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "已拥有激励语",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/main.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/main.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/cancel": {
             "post": {
                 "description": "用户通过邮箱注销账户。如果邮箱对应的用户不存在，返回错误信息。",
                 "consumes": [
@@ -95,7 +276,47 @@ const docTemplate = `{
                 }
             }
         },
-        "/login/password": {
+        "/user/login/forget_alter": {
+            "post": {
+                "description": "用户通过邮箱和验证码修改密码，验证码有效后可以修改密码。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户相关"
+                ],
+                "summary": "忘记密码和修改密码",
+                "parameters": [
+                    {
+                        "description": "修改密码信息",
+                        "name": "alter",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.AlterPassword"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/login_p": {
             "post": {
                 "description": "用户通过邮箱和密码进行登录，成功后返回token",
                 "consumes": [
@@ -115,7 +336,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.UserLogin"
+                            "$ref": "#/definitions/main.Login"
                         }
                     }
                 ],
@@ -135,7 +356,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/login/visitor": {
+        "/user/login_v": {
             "post": {
                 "description": "游客通过设备号进行登录，如果该设备号尚未注册，则会创建一个新用户并返回 JWT Token",
                 "consumes": [
@@ -155,7 +376,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.VisterLogin"
+                            "$ref": "#/definitions/main.VLogin"
                         }
                     }
                 ],
@@ -175,7 +396,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/register": {
+        "/user/register": {
             "post": {
                 "description": "用户通过邮箱注册，包含验证码验证",
                 "consumes": [
@@ -215,7 +436,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/send-email": {
+        "/user/send_email": {
             "post": {
                 "description": "向用户邮箱发送验证码",
                 "consumes": [
@@ -235,7 +456,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.Email"
+                            "$ref": "#/definitions/main.Useemail"
                         }
                     }
                 ],
@@ -279,13 +500,24 @@ const docTemplate = `{
                 }
             }
         },
-        "main.Email": {
+        "main.Login": {
             "type": "object",
             "properties": {
-                "code": {
+                "email": {
                     "type": "string"
                 },
-                "name": {
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.Newslogan": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "newslogan": {
                     "type": "string"
                 }
             }
@@ -304,19 +536,10 @@ const docTemplate = `{
                 }
             }
         },
-        "main.UserLogin": {
+        "main.Useemail": {
             "type": "object",
             "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "username": {
+                "email_name": {
                     "type": "string"
                 }
             }
@@ -341,16 +564,10 @@ const docTemplate = `{
                 }
             }
         },
-        "main.VisterLogin": {
+        "main.VLogin": {
             "type": "object",
             "properties": {
                 "device_num": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "username": {
                     "type": "string"
                 }
             }

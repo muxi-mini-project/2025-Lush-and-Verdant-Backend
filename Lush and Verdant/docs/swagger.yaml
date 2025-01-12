@@ -13,11 +13,18 @@ definitions:
       email:
         type: string
     type: object
-  main.Email:
+  main.Login:
     properties:
-      code:
+      email:
         type: string
-      name:
+      password:
+        type: string
+    type: object
+  main.Newslogan:
+    properties:
+      id:
+        type: integer
+      newslogan:
         type: string
     type: object
   main.Response:
@@ -29,15 +36,9 @@ definitions:
       token:
         type: string
     type: object
-  main.UserLogin:
+  main.Useemail:
     properties:
-      code:
-        type: string
-      email:
-        type: string
-      password:
-        type: string
-      username:
+      email_name:
         type: string
     type: object
   main.UserRegister:
@@ -53,45 +54,133 @@ definitions:
       username:
         type: string
     type: object
-  main.VisterLogin:
+  main.VLogin:
     properties:
       device_num:
-        type: string
-      email:
-        type: string
-      username:
         type: string
     type: object
 info:
   contact: {}
 paths:
-  /alter/password:
-    post:
+  /courage_words/change_word:
+    put:
       consumes:
       - application/json
-      description: 用户通过邮箱和验证码修改密码，验证码有效后可以修改密码。
+      description: 用户可以通过此接口更新他们的口号
       parameters:
-      - description: 修改密码信息
+      - description: 新的口号内容
         in: body
-        name: alter
+        name: newSlogan
         required: true
         schema:
-          $ref: '#/definitions/main.AlterPassword'
+          $ref: '#/definitions/main.Newslogan'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 更新成功
           schema:
-            $ref: '#/definitions/main.Response'
+            allOf:
+            - $ref: '#/definitions/main.Response'
+            - properties:
+                message:
+                  type: string
+              type: object
         "400":
-          description: Bad Request
+          description: 请求错误
           schema:
-            $ref: '#/definitions/main.Response'
-      summary: 忘记密码和修改密码
+            allOf:
+            - $ref: '#/definitions/main.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "404":
+          description: 未找到
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "500":
+          description: 服务器错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 更新用户的口号
       tags:
-      - 用户相关
-  /cancel/account:
+      - 用户
+  /courage_words/get_word/{device}:
+    get:
+      consumes:
+      - application/json
+      description: 通过设备号获取激励语，如果设备尚未设置激励语，则为其分配一个
+      parameters:
+      - description: 设备号
+        in: path
+        name: device
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.Response'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "400":
+          description: 设备号不能为空
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "404":
+          description: 未找到激励语
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "409":
+          description: 已拥有激励语
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.Response'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "500":
+          description: 服务器错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      summary: 获取设备的激励语
+      tags:
+      - 用户
+  /user/cancel:
     post:
       consumes:
       - application/json
@@ -117,7 +206,33 @@ paths:
       summary: 注销账户
       tags:
       - 用户相关
-  /login/password:
+  /user/login/forget_alter:
+    post:
+      consumes:
+      - application/json
+      description: 用户通过邮箱和验证码修改密码，验证码有效后可以修改密码。
+      parameters:
+      - description: 修改密码信息
+        in: body
+        name: alter
+        required: true
+        schema:
+          $ref: '#/definitions/main.AlterPassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: 忘记密码和修改密码
+      tags:
+      - 用户相关
+  /user/login_p:
     post:
       consumes:
       - application/json
@@ -128,7 +243,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/main.UserLogin'
+          $ref: '#/definitions/main.Login'
       produces:
       - application/json
       responses:
@@ -143,7 +258,7 @@ paths:
       summary: 用户登录（密码方式）
       tags:
       - 用户相关
-  /login/visitor:
+  /user/login_v:
     post:
       consumes:
       - application/json
@@ -154,7 +269,7 @@ paths:
         name: vister
         required: true
         schema:
-          $ref: '#/definitions/main.VisterLogin'
+          $ref: '#/definitions/main.VLogin'
       produces:
       - application/json
       responses:
@@ -169,7 +284,7 @@ paths:
       summary: 游客登录
       tags:
       - 用户相关
-  /register:
+  /user/register:
     post:
       consumes:
       - application/json
@@ -195,7 +310,7 @@ paths:
       summary: 用户注册
       tags:
       - 用户相关
-  /send-email:
+  /user/send_email:
     post:
       consumes:
       - application/json
@@ -206,7 +321,7 @@ paths:
         name: email
         required: true
         schema:
-          $ref: '#/definitions/main.Email'
+          $ref: '#/definitions/main.Useemail'
       produces:
       - application/json
       responses:

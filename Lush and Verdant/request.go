@@ -13,8 +13,8 @@ type User struct {
 	Slogans    string `json:"slogans"`
 }
 type Email struct {
-	Name string `json:"name"`
-	Code string `json:"code"`
+	EmailName string `json:"email_name"`
+	Code      string `json:"code"`
 }
 type UserRegister struct {
 	Username   string `json:"username"`
@@ -29,7 +29,7 @@ type UserLogin struct {
 	Email    string `json:"email"`
 	Code     string `json:"code"`
 }
-type VisterLogin struct {
+type VisiterLogin struct {
 	Username   string `json:"username"`
 	Device_Num string `json:"device_num"`
 	Email      string `json:"email"`

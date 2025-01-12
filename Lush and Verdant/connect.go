@@ -11,10 +11,7 @@ const (
 	dbUser     = "root"
 	dbPassword = "j72739906"
 	dbName     = "conglong"
-	secretKey  = "aComplexSecretKeyForSecurity"
 )
-
-var db *sql.DB
 
 // 配置数据库连接
 func InitDB() error {
