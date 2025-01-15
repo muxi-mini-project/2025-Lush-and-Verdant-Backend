@@ -1,30 +1,28 @@
-package main
+package tool
 
 import (
+	"2025-Lush-and-Verdant-Backend/config"
+	"2025-Lush-and-Verdant-Backend/dao"
+	"2025-Lush-and-Verdant-Backend/model"
 	"crypto/tls"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"math/rand"
 	"net/smtp"
 	"time"
 )
 
-const (
-	defaultLetters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-)
+var dsn = config.Dsn
 
+// 生成验证码
 func GenerateCode() string {
 	rand.Seed(time.Now().UnixNano()) //以纳米为级别
 	code := rand.Intn(1000000)       //生成6位数的验证码
 	return fmt.Sprintf("%06d", code)
 }
 
-// 发送邮件
-func SendEmail(to, code string) error {
-	return sendEmailByQQEmail(to, code)
-}
-
-// sendEmail 发送邮件函数
-func sendEmailByQQEmail(to string, code string) error {
+// SendEmailByQQEmail 发送邮件函数
+func SendEmailByQQEmail(to string, code string) error {
 	from := "3953017473@qq.com"
 	password := "vzsvxefmdmqkcgbg" // 邮箱授权码
 	smtpServer := "smtp.qq.com:465"
@@ -96,4 +94,36 @@ func sendEmailByQQEmail(to string, code string) error {
 	}
 
 	return nil
+}
+
+// 从前端获得email json格式的
+func GetEmailName(c *gin.Context) (string, bool) {
+	var email model.Email
+	if err := c.ShouldBind(&email); err != nil {
+		return "", false
+	} else {
+		return email.Email, true
+	}
+}
+
+// 修改验证码状态
+func ChangeStatus(email string) error {
+	db := dao.NewDB(dsn)
+	var email1 model.Email
+	//查询信息
+
+	result := db.Where("email=?", email).First(&email1)
+	if result.Error != nil {
+		return result.Error
+	}
+	if email1.Status { //有效改为无效
+		result := db.Where("email=?", email).Update("status", false)
+		if result.Error != nil {
+			return result.Error
+		}
+		return nil
+	} else {
+		return nil
+	}
+
 }
