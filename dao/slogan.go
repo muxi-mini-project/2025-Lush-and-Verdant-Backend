@@ -1,6 +1,11 @@
 package dao
 
-import "2025-Lush-and-Verdant-Backend/model"
+import (
+	"2025-Lush-and-Verdant-Backend/config"
+	"2025-Lush-and-Verdant-Backend/model"
+)
+
+var dsn = config.Dsn
 
 // 对slogan库的初始化
 func CreateSlogan() {
