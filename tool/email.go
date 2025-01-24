@@ -23,8 +23,8 @@ func GenerateCode() string {
 
 // SendEmailByQQEmail 发送邮件函数
 func SendEmailByQQEmail(to string, code string) error {
-	from := "3953017473@qq.com"
-	password := "vzsvxefmdmqkcgbg" // 邮箱授权码
+	from := config.QQ
+	password := config.QQKey // 邮箱授权码
 	smtpServer := "smtp.qq.com:465"
 
 	// 设置 PlainAuth
