@@ -1,10 +1,12 @@
-package tool
+package client
 
 import (
-	"2025-Lush-and-Verdant-Backend/model"
+	"2025-Lush-and-Verdant-Backend/api/request"
+	"2025-Lush-and-Verdant-Backend/api/response"
+	"2025-Lush-and-Verdant-Backend/config"
 	"context"
 	"encoding/json"
-	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -12,11 +14,11 @@ import (
 	"regexp"
 )
 
-func AskForSlogan(c *gin.Context) map[string]string {
+func AskForGoal(c *gin.Context) map[string]string {
 	// 设置初始配置
 	var options = []option.RequestOption{
 		option.WithBaseURL("https://api.chatanywhere.tech"), //更换了BaseURL,openai的太贵了
-		option.WithAPIKey("sk-N6lrAjlMMcUtHktbIooOFFyiZB9jEGTjwlnGLt9FbaNJQHLM"),
+		option.WithAPIKey(config.ChatGptSDK),
 	}
 
 	// 设置自定义的 baseurl 和 API 密钥
@@ -269,17 +271,16 @@ output:{
     }
   ]
 }
-    `
-
-	var message model.Question
+`
+	var message request.Question
 	if err := c.ShouldBind(&message); err != nil {
-		c.JSON(http.StatusBadRequest, model.Response{Error: "解析失败"})
+		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
 		return nil
 	}
 
-	messageJSON, err := json.Marshal(message)
+	messageJSON, err := json.Marshal(message) //转化为json格式的字节切片
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.Response{Error: "转换失败"})
+		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
 		return nil
 	}
 
@@ -299,7 +300,7 @@ output:{
 
 	// 获取返回的内容
 	response := chatCompletion.Choices[0].Message.Content
-	fmt.Println("Raw Response:", response)
+	//fmt.Println("Raw Response:", response)
 
 	// 匹配 JSON 格式的 key-value
 	re := regexp.MustCompile(`"([\w-]+)":\s*"([^"]+)"`)
@@ -316,6 +317,6 @@ output:{
 	}
 
 	// 打印解析结果
-	fmt.Println(result)
+	//fmt.Println(result)
 	return result
 }
