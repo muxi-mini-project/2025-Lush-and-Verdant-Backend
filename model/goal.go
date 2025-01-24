@@ -4,12 +4,6 @@ import (
 	"time"
 )
 
-type Question struct {
-	Topic       string `json:"topic"`
-	Description string `json:"description"`
-	Cycle       string `json:"cycle"`
-}
-
 type CustomTime time.Time
 
 // Event 结构体表示单个事件
