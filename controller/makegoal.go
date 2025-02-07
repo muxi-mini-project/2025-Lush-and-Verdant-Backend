@@ -3,26 +3,11 @@ package controller
 import (
 	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/client"
-	"2025-Lush-and-Verdant-Backend/config"
 	"2025-Lush-and-Verdant-Backend/model"
-	"2025-Lush-and-Verdant-Backend/service"
-
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
-
-var timelayout = config.TimeLayout
-
-type GoalController struct {
-	gsr *service.GoalService
-}
-
-func NewGoalController(gsr *service.GoalService) *GoalController {
-	return &GoalController{
-		gsr: gsr,
-	}
-}
 
 func (mc *GoalController) GetGoal(c *gin.Context) {
 	result := client.AskForGoal(c)

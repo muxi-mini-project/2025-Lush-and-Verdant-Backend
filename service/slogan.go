@@ -4,18 +4,7 @@ import (
 	"2025-Lush-and-Verdant-Backend/api/request"
 	"2025-Lush-and-Verdant-Backend/model"
 	"fmt"
-	"gorm.io/gorm"
 )
-
-type SloganService struct {
-	db *gorm.DB
-}
-
-func NewSloganService(db *gorm.DB) *SloganService {
-	return &SloganService{
-		db: db,
-	}
-}
 
 func (ssr *SloganService) GetSlogan(device string) error {
 

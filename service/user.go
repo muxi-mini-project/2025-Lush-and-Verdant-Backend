@@ -7,22 +7,11 @@ import (
 	"2025-Lush-and-Verdant-Backend/model"
 	"2025-Lush-and-Verdant-Backend/tool"
 	"fmt"
-	"gorm.io/gorm"
 	"log"
 	"strconv"
 	"strings"
 	"time"
 )
-
-type UserService struct {
-	db *gorm.DB
-}
-
-func NewUserService(db *gorm.DB) *UserService {
-	return &UserService{
-		db: db,
-	}
-}
 
 // 此时的0, 1, 2相当于状态码
 // 0 失败

@@ -3,18 +3,7 @@ package service
 import (
 	"2025-Lush-and-Verdant-Backend/model"
 	"fmt"
-	"gorm.io/gorm"
 )
-
-type GoalService struct {
-	db *gorm.DB
-}
-
-func NewGoalService(db *gorm.DB) *GoalService {
-	return &GoalService{
-		db: db,
-	}
-}
 
 func (gsr *GoalService) PostGoal(message model.TasksData) error {
 

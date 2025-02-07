@@ -3,24 +3,9 @@ package controller
 import (
 	"2025-Lush-and-Verdant-Backend/api/request"
 	"2025-Lush-and-Verdant-Backend/api/response"
-	"2025-Lush-and-Verdant-Backend/config"
-	"2025-Lush-and-Verdant-Backend/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
-
-var dsn = config.Dsn
-
-type UserController struct {
-	usr *service.UserService
-}
-
-// 创建新用户
-func NewUserController(usr *service.UserService) *UserController {
-	return &UserController{
-		usr: usr,
-	}
-}
 
 // 注册用户
 func (uc *UserController) Register(c *gin.Context) {
