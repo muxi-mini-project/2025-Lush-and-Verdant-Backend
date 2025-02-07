@@ -23,7 +23,9 @@ type Task struct {
 	Description string     `json:"description"`
 	StartTime   CustomTime `json:"start_time"`
 	EndTime     CustomTime `json:"end_time"`
-	Events      []Event    `json:"events"` // 任务下的多个事件
+	UserID      uint       `json:"user_id"`      // 外键，关联用户
+	Events      []Event    `json:"events"`       // 任务下的多个事件
+	IsCompleted bool       `json:"is_completed"` // 检测任务是否完成
 }
 
 // TasksData 是最外层结构体，包含多个任务
