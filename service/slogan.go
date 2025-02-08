@@ -4,9 +4,26 @@ import (
 	"2025-Lush-and-Verdant-Backend/api/request"
 	"2025-Lush-and-Verdant-Backend/model"
 	"fmt"
+	"gorm.io/gorm"
 )
 
-func (ssr *SloganService) GetSlogan(device string) error {
+type SloganService interface {
+	GetSlogan(string) error
+	ChangeSlogan(uint, request.Slogan) error
+}
+
+type SloganServiceImpl struct {
+	db *gorm.DB
+}
+
+// 一个实例化对象
+func NewSloganServiceImpl(db *gorm.DB) *SloganServiceImpl {
+	return &SloganServiceImpl{
+		db: db,
+	}
+}
+
+func (ssr *SloganServiceImpl) GetSlogan(device string) error {
 
 	// 查找所有的激励语
 	var slogans []model.Slogan
@@ -35,7 +52,7 @@ func (ssr *SloganService) GetSlogan(device string) error {
 	return nil
 }
 
-func (ssr *SloganService) ChangeSlogan(id uint, newSlogan request.Slogan) error {
+func (ssr *SloganServiceImpl) ChangeSlogan(id uint, newSlogan request.Slogan) error {
 
 	var user model.User
 	err := ssr.db.Table("users").Where("id = ?", id).First(&user).Error

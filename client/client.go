@@ -14,11 +14,19 @@ import (
 	"regexp"
 )
 
-func AskForGoal(c *gin.Context) map[string]string {
+type ChatGptClient struct {
+	cfg *config.ChatGptConfig
+}
+
+func NewChatGptClient(cfg *config.ChatGptConfig) *ChatGptClient {
+	return &ChatGptClient{cfg: cfg}
+}
+
+func (cg *ChatGptClient) AskForGoal(c *gin.Context) map[string]string {
 	// 设置初始配置
 	var options = []option.RequestOption{
 		option.WithBaseURL("https://api.chatanywhere.tech"), //更换了BaseURL,openai的太贵了
-		option.WithAPIKey(config.ChatGptSDK),
+		option.WithAPIKey(cg.cfg.Sdk),
 	}
 
 	// 设置自定义的 baseurl 和 API 密钥

@@ -2,54 +2,63 @@ package service
 
 import (
 	"2025-Lush-and-Verdant-Backend/api/request"
-	"2025-Lush-and-Verdant-Backend/model"
+	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/tool"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 	"time"
 )
 
-func (usr *UserService) SendEmail(email request.Email) error {
+func (usr *UserServiceImpl) SendEmail(c *gin.Context) error {
+
+	var email request.Email
+	if err := c.ShouldBindJSON(&email); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Error: "获取邮箱失败"})
+		return err
+	}
 
 	//生成验证码
 	code := tool.GenerateCode()
-
-	var emailCheck model.Email
 	//先查询验证码的状态
-	result := usr.db.Where("email = ?", email.Email).Find(&emailCheck)
-	//如果有就检查验证码的状态
-	if result.RowsAffected != 0 {
+	emailCheck, ok := usr.CheckSendEmail(email.Email)
+	if ok { //有验证码
 		if emailCheck.Status { //此时是有效的，重新发送,并修改验证码
-			err := tool.SendEmailByQQEmail(email.Email, code)
+			err := usr.mail.SendEmailByQQEmail(email.Email, code)
 			if err != nil {
 				return fmt.Errorf("发送失败")
 			}
 			//更新验证码
-			result = usr.db.Model(&emailCheck).Where("email = ?", email.Email).Update("code", code)
+			result := usr.db.Model(&emailCheck).Where("mail = ?", email.Email).Update("code", code)
 			if result.Error != nil {
+				c.JSON(http.StatusBadRequest, response.Response{Error: "更新验证码失败"})
 				return fmt.Errorf("更新验证码失败")
 			}
 		} else { //此时是无效的，重新发送，并更新验证码及其状态
-
-			err := tool.SendEmailByQQEmail(email.Email, code)
+			err := usr.mail.SendEmailByQQEmail(email.Email, code)
 			if err != nil {
+				c.JSON(http.StatusBadRequest, response.Response{Error: "发送失败"})
 				return fmt.Errorf("发送失败")
 			}
-			result := usr.db.Model(&email).Where("email = ?", email.Email).Updates(map[string]interface{}{"code": code, "status": true})
+			result := usr.db.Model(&email).Where("mail = ?", email.Email).Updates(map[string]interface{}{"code": code, "status": true})
 			if result.Error != nil {
+				c.JSON(http.StatusBadRequest, response.Response{Error: "更新验证码失败"})
 				return fmt.Errorf("更新验证码失败")
 			}
 		}
-	} else { //没有
+	} else { //没有验证码
 		emailCheck.Status = true
 		emailCheck.Code = code
 		emailCheck.Email = email.Email
-		err := tool.SendEmailByQQEmail(email.Email, code)
+		err := usr.mail.SendEmailByQQEmail(email.Email, code)
 		if err != nil {
+			c.JSON(http.StatusBadRequest, response.Response{Error: "发送失败"})
 			return fmt.Errorf("发送失败")
 		}
 		result := usr.db.Create(&emailCheck)
 		if result.Error != nil {
+			c.JSON(http.StatusBadRequest, response.Response{Error: "更新验证码失败"})
 			return fmt.Errorf("更新验证码失败")
 		}
 	}
@@ -59,14 +68,10 @@ func (usr *UserService) SendEmail(email request.Email) error {
 	delay := 5 * time.Minute
 	time.AfterFunc(delay, func() {
 		//先检查状态
-		result := usr.db.Where("email = ?", email.Email).First(&emailCheck)
-		if result.Error != nil {
-			log.Println("用户%v的验证码查询出现错误", email.Email)
-			return
-		}
+		emailChe, _ := usr.CheckSendEmail(email.Email)
 		//如果状态是有效的,变成无效的
-		if emailCheck.Status {
-			result := usr.db.Model(&email).Where("email = ?", email.Email).Update("status", false)
+		if emailChe.Status {
+			result := usr.db.Model(&email).Where("mail = ?", email.Email).Update("status", false)
 			if result.Error != nil {
 				log.Println("用户%v的验证码状态改变出现错误", email.Email)
 				return
@@ -74,7 +79,7 @@ func (usr *UserService) SendEmail(email request.Email) error {
 		}
 		//状态无效则不做处理
 	})
-
+	c.JSON(http.StatusOK, response.Response{Message: "发送成功"})
 	return nil
 
 }

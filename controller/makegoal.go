@@ -4,13 +4,25 @@ import (
 	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/client"
 	"2025-Lush-and-Verdant-Backend/model"
+	"2025-Lush-and-Verdant-Backend/service"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
+type GoalController struct {
+	gsr service.GoalService
+	gpt *client.ChatGptClient
+}
+
+func NewGoalController(gsr service.GoalService, gpt *client.ChatGptClient) *GoalController {
+	return &GoalController{
+		gsr: gsr,
+		gpt: gpt,
+	}
+}
 func (mc *GoalController) GetGoal(c *gin.Context) {
-	result := client.AskForGoal(c)
+	result := mc.gpt.AskForGoal(c)
 
 	dataJSON, err := json.Marshal(result)
 	if err != nil {

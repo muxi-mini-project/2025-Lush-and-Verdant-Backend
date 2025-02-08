@@ -1,15 +1,13 @@
 package dao
 
 import (
-	"2025-Lush-and-Verdant-Backend/config"
 	"2025-Lush-and-Verdant-Backend/model"
+	"gorm.io/gorm"
 )
 
-var dsn = config.Dsn
-
+// 这个之后就用不到了，其实可以把文件删了
 // 对slogan库的初始化
-func CreateSlogan() {
-	db := NewDB(dsn)
+func CreateSlogan(db *gorm.DB) {
 
 	db.AutoMigrate(&model.Slogan{})
 

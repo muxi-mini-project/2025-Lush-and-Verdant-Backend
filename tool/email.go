@@ -2,17 +2,28 @@ package tool
 
 import (
 	"2025-Lush-and-Verdant-Backend/config"
-	"2025-Lush-and-Verdant-Backend/dao"
 	"2025-Lush-and-Verdant-Backend/model"
 	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"math/rand"
 	"net/smtp"
 	"time"
 )
 
-var dsn = config.Dsn
+type Mail struct {
+	db  *gorm.DB
+	cfg *config.QQConfig
+}
+
+func NewMail(db *gorm.DB, cfg *config.QQConfig) *Mail {
+	return &Mail{
+		db:  db,
+		cfg: cfg,
+	}
+
+}
 
 // 生成验证码
 func GenerateCode() string {
@@ -22,9 +33,9 @@ func GenerateCode() string {
 }
 
 // SendEmailByQQEmail 发送邮件函数
-func SendEmailByQQEmail(to string, code string) error {
-	from := config.QQ
-	password := config.QQKey // 邮箱授权码
+func (mail *Mail) SendEmailByQQEmail(to string, code string) error {
+	from := mail.cfg.Email
+	password := mail.cfg.Key // 邮箱授权码
 	smtpServer := "smtp.qq.com:465"
 
 	// 设置 PlainAuth
@@ -96,7 +107,7 @@ func SendEmailByQQEmail(to string, code string) error {
 	return nil
 }
 
-// 从前端获得email json格式的
+// 从前端获得email json格式的 //这个暂时没用到
 func GetEmailName(c *gin.Context) (string, bool) {
 	var email model.Email
 	if err := c.ShouldBind(&email); err != nil {
@@ -107,17 +118,17 @@ func GetEmailName(c *gin.Context) (string, bool) {
 }
 
 // 修改验证码状态
-func ChangeStatus(email string) error {
-	db := dao.NewDB(dsn)
+func (mail *Mail) ChangeStatus(email string) error {
+
 	var email1 model.Email
 	//查询信息
 
-	result := db.Where("email=?", email).First(&email1)
+	result := mail.db.Where("email=?", email).First(&email1)
 	if result.Error != nil {
 		return result.Error
 	}
 	if email1.Status { //有效改为无效
-		result := db.Model(&email1).Where("email=?", email).Update("status", false)
+		result := mail.db.Model(&email1).Where("email=?", email).Update("status", false)
 		if result.Error != nil {
 			return result.Error
 		}
@@ -125,5 +136,4 @@ func ChangeStatus(email string) error {
 	} else {
 		return nil
 	}
-
 }

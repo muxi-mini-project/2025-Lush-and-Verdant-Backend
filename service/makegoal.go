@@ -3,9 +3,27 @@ package service
 import (
 	"2025-Lush-and-Verdant-Backend/model"
 	"fmt"
+	"gorm.io/gorm"
 )
 
-func (gsr *GoalService) PostGoal(message model.TasksData) error {
+type GoalService interface {
+	PostGoal(model.TasksData) error
+	UpdateGoal(uint, model.TasksData) error
+	HistoricalGoal(uint) ([]model.Task, error)
+	DeleteGoal(uint, string) error
+}
+
+type GoalServiceImpl struct {
+	db *gorm.DB
+}
+
+func NewGoalServiceImpl(db *gorm.DB) *GoalServiceImpl {
+	return &GoalServiceImpl{
+		db: db,
+	}
+}
+
+func (gsr *GoalServiceImpl) PostGoal(message model.TasksData) error {
 	for _, task := range message.Tasks {
 		// 创建任务并关联到userID
 		taskData := model.Task{
@@ -38,7 +56,7 @@ func (gsr *GoalService) PostGoal(message model.TasksData) error {
 	return nil
 }
 
-func (gsr *GoalService) UpdateGoal(userID uint, message model.TasksData) error {
+func (gsr *GoalServiceImpl) UpdateGoal(userID uint, message model.TasksData) error {
 	for _, task := range message.Tasks {
 		var existingTask model.Task
 		if err := gsr.db.Where("id = ? AND user_id = ?", task.ID, userID).First(&existingTask).Error; err != nil {
@@ -74,7 +92,7 @@ func (gsr *GoalService) UpdateGoal(userID uint, message model.TasksData) error {
 	return nil
 }
 
-func (gsr *GoalService) HistoricalGoal(userID uint) ([]model.Task, error) {
+func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) ([]model.Task, error) {
 	var tasks []model.Task
 	if err := gsr.db.Where("user_id = ?", userID).Find(&tasks).Error; err != nil {
 		return nil, fmt.Errorf("获取目标失败")
@@ -91,7 +109,7 @@ func (gsr *GoalService) HistoricalGoal(userID uint) ([]model.Task, error) {
 	return tasks, nil
 }
 
-func (gsr *GoalService) DeleteGoal(userID uint, taskID string) error {
+func (gsr *GoalServiceImpl) DeleteGoal(userID uint, taskID string) error {
 	var task model.Task
 
 	if err := gsr.db.Where("id = ? AND user_id = ?", taskID, userID).First(&task).Error; err != nil {
