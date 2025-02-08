@@ -1,0 +1,18 @@
+database:
+  addr: "root:123@tcp(127.0.0.1:3306)/example?charset=utf8mb4&parseTime=True&loc=Local"
+
+jwt:
+  secretkey: "123"
+
+pri:
+  name: "123"
+
+timelayout:
+  template: "123"
+
+chatgpt:
+  sdk: "123"
+
+qq:
+  email: "123@qq.com"
+  key: "123"
