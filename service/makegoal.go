@@ -106,8 +106,23 @@ func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) ([]*model.Task, error) {
 	return tasks, nil
 }
 
+//	func (gsr *GoalServiceImpl) DeleteGoal(userID uint, taskID string) error {
+//		err := gsr.GoalDao.DeleteTask(taskID, userID)
+//		if err != nil {
+//			return err
+//		}
+//		return nil
+//	}
 func (gsr *GoalServiceImpl) DeleteGoal(userID uint, taskID string) error {
-	err := gsr.GoalDao.DeleteTask(taskID, userID)
+	task, err := gsr.GoalDao.GetTaskS(taskID, userID)
+	if err != nil {
+		return err
+	}
+	err = gsr.GoalDao.DeleteEvents(task.ID)
+	if err != nil {
+		return err
+	}
+	err = gsr.GoalDao.DeleteTask(task)
 	if err != nil {
 		return err
 	}

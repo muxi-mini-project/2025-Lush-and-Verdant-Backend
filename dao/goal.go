@@ -10,12 +10,14 @@ type GoalDAO interface {
 	CreatTask(taskData *model.Task) error
 	CreatEvent(eventData *model.Event) error
 	GetTask(taskId uint, userId uint) (*model.Task, error)
+	GetTaskS(taskID string, userId uint) (*model.Task, error)
 	GetTasks(userId uint) ([]*model.Task, error)
 	GetEvent(eventId uint, taskId uint) (*model.Event, error)
 	GetEvents(taskId uint) ([]model.Event, error)
 	UpdateTask(existingTask *model.Task) error
 	UpdateEvent(existingEvent *model.Event) error
-	DeleteTask(taskId string, userId uint) error
+	DeleteTask(task *model.Task) error
+	DeleteEvents(taskId uint) error
 }
 type GoalDAOImpl struct {
 	db *gorm.DB
@@ -61,6 +63,17 @@ func (dao *GoalDAOImpl) GetTask(taskId uint, userId uint) (*model.Task, error) {
 	return &existingTask, nil
 }
 
+// todo task_id 为什么有时候是string、有时候是uint
+// 因为string task_id
+func (dao *GoalDAOImpl) GetTaskS(taskID string, userId uint) (*model.Task, error) {
+	var task model.Task
+	// 查找该用户的任务
+	if err := dao.db.Where("id = ? AND user_id = ?", taskID, userId).First(&task).Error; err != nil {
+		return nil, fmt.Errorf("未找到该任务")
+	}
+	return &task, nil
+}
+
 // 根据event_id 和 even_taskID 来查找event事件
 func (dao *GoalDAOImpl) GetEvent(eventId uint, taskId uint) (*model.Event, error) {
 	var existingEvent model.Event
@@ -95,16 +108,20 @@ func (dao *GoalDAOImpl) UpdateEvent(existingEvent *model.Event) error {
 	return nil
 }
 
-// 根据taskId和userId删除task
-func (dao *GoalDAOImpl) DeleteTask(taskId string, userId uint) error {
-	var task model.Task
-
-	if err := dao.db.Where("id = ? AND user_id = ?", taskId, userId).First(&task).Error; err != nil {
-		return fmt.Errorf("未找到该任务")
+// 删除任务
+func (dao *GoalDAOImpl) DeleteTask(task *model.Task) error {
+	// 删除任务
+	if err := dao.db.Delete(&task).Error; err != nil {
+		return fmt.Errorf("删除任务失败")
 	}
+	return nil
+}
 
-	if err := dao.db.Where(&task).Error; err != nil {
-		return fmt.Errorf("任务删除失败")
+// 根据task_id(uint)来删除events
+func (dao *GoalDAOImpl) DeleteEvents(taskId uint) error {
+	// 删除该任务下的所有事件
+	if err := dao.db.Where("task_id = ?", taskId).Delete(&model.Event{}).Error; err != nil {
+		return fmt.Errorf("删除事件失败")
 	}
 	return nil
 }
