@@ -4,12 +4,11 @@ import (
 	"2025-Lush-and-Verdant-Backend/api/request"
 	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/config"
+	"2025-Lush-and-Verdant-Backend/dao"
 	"2025-Lush-and-Verdant-Backend/middleware"
-	"2025-Lush-and-Verdant-Backend/model"
 	"2025-Lush-and-Verdant-Backend/tool"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,15 +17,15 @@ import (
 )
 
 type UserServiceImpl struct {
-	db     *gorm.DB
+	Dao    dao.UserDAO
 	jwt    *middleware.JwtClient
 	mail   *tool.Mail
 	priCfg *config.PriConfig
 }
 
-func NewUserServiceImpl(db *gorm.DB, jwt *middleware.JwtClient, mail *tool.Mail, priCfg *config.PriConfig) *UserServiceImpl {
+func NewUserServiceImpl(userDao dao.UserDAO, jwt *middleware.JwtClient, mail *tool.Mail, priCfg *config.PriConfig) *UserServiceImpl {
 	return &UserServiceImpl{
-		db:     db,
+		Dao:    userDao,
 		jwt:    jwt,
 		mail:   mail,
 		priCfg: priCfg,
@@ -41,21 +40,22 @@ func (usr *UserServiceImpl) UserRegister(c *gin.Context) error {
 		return err
 	}
 	//先查询用户是否注册
-	user, ok := usr.CheckUserByDevice(userRegister.Device_Num)
-
+	user, ok := usr.Dao.CheckUserByDevice(userRegister.Device_Num)
 	if ok { //有用户
 		if strings.Compare(user.Password, "") == 0 { //此时是游客，更新状态
 			//此时更新用户
 			user.Username = userRegister.Username
 			user.Password = userRegister.Password
 			user.Email = userRegister.Email
-			result := usr.db.Model(&user).Where("device_num = ?", userRegister.Device_Num).Updates(&user)
-			if result.Error != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: result.Error.Error()})
-				return result.Error
+			//更新用户
+			err := usr.Dao.VisitorToUser(userRegister.Device_Num, user)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, response.Response{Error: "游客转正失败"})
+				return err
 			}
+
 			log.Printf("register user %v success", user.Email)
-			err := usr.mail.ChangeStatus(userRegister.Email)
+			err = usr.mail.ChangeStatus(userRegister.Email)
 			if err != nil {
 				log.Println("转正完成但验证码未修改成功")
 				log.Println(err)
@@ -70,7 +70,7 @@ func (usr *UserServiceImpl) UserRegister(c *gin.Context) error {
 		}
 	} else { //没有用户
 		//先查询验证码的状态
-		email, ok := usr.CheckSendEmail(userRegister.Email)
+		email, ok := usr.Dao.CheckSendEmail(userRegister.Email)
 		if ok { //有验证码
 			if email.Status { //验证码有效
 				if strings.Compare(email.Code, userRegister.Code) == 0 { //验证码验证成功
@@ -79,13 +79,14 @@ func (usr *UserServiceImpl) UserRegister(c *gin.Context) error {
 					user.Password = userRegister.Password
 					user.Email = userRegister.Email
 					user.DeviceNum = userRegister.Device_Num
-					result := usr.db.Create(&user)
-					if result.Error != nil {
-						c.JSON(http.StatusBadRequest, response.Response{Error: result.Error.Error()})
-						return result.Error
+					//创建新用户
+					err := usr.Dao.CreateUser(user)
+					if err != nil {
+						c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+						return err
 					}
 					log.Printf("register user %v success", user.Email)
-					err := usr.mail.ChangeStatus(userRegister.Email)
+					err = usr.mail.ChangeStatus(userRegister.Email)
 					if err != nil {
 						log.Println("注册完成但验证码未修改成功")
 						log.Println(err)
@@ -119,7 +120,7 @@ func (usr *UserServiceImpl) UserLogin(c *gin.Context) error {
 		return err
 	}
 
-	user, ok := usr.CheckUserByEmail(userLogin.Email)
+	user, ok := usr.Dao.CheckUserByEmail(userLogin.Email)
 	if ok { //发现用户，验证密码
 		if user.Password == userLogin.Password { //密码正确
 			//生成token
@@ -150,7 +151,7 @@ func (usr *UserServiceImpl) VisitorLogin(c *gin.Context) error {
 		return err
 	}
 	//查询这个机型是否登陆过
-	user, ok := usr.CheckUserByDevice(visitor.Device_Num)
+	user, ok := usr.Dao.CheckUserByDevice(visitor.Device_Num)
 	if ok { //登录过 //不是新用户
 		now := time.Now()
 		monthlate := user.CreatedAt.AddDate(0, 1, 0)
@@ -175,17 +176,18 @@ func (usr *UserServiceImpl) VisitorLogin(c *gin.Context) error {
 		}
 	} else { //说明是新用户
 		user.DeviceNum = visitor.Device_Num
-		result := usr.db.Create(&user)
-		if result.Error != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: result.Error.Error()})
-			return result.Error
+		//创建游客
+		err := usr.Dao.CreateUser(user)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+			return err
 		}
 		//给这个游客姓名
 		username := usr.priCfg.Name + strconv.Itoa(int(user.ID))
-		result = usr.db.Model(&user).Where("device_num = ?", user.DeviceNum).Update("username", username)
-		if result.Error != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: result.Error.Error()})
-			return result.Error
+		err = usr.Dao.UpdateUserName(user.DeviceNum, username)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+			return err
 		}
 		//传送token
 		token, err := usr.jwt.GenerateToken(int(user.ID))
@@ -208,20 +210,19 @@ func (usr *UserServiceImpl) ForForAlt(c *gin.Context) error {
 	}
 
 	//先查有没有该用户
-	user, ok := usr.CheckUserByEmail(foralt.Email)
+	user, ok := usr.Dao.CheckUserByEmail(foralt.Email)
 	if ok { //有用户
 		//查询验证码
-		email, ok := usr.CheckSendEmail(foralt.Email)
+		email, ok := usr.Dao.CheckSendEmail(foralt.Email)
 		if ok { //查询到验证码
 			if email.Status { //验证码有效
 				if strings.Compare(email.Code, foralt.Code) == 0 { //验证码正确
-
-					result := usr.db.Model(&user).Where("mail = ?", foralt.Email).Update("password", foralt.Password)
-					if result.Error != nil {
-						c.JSON(http.StatusBadRequest, response.Response{Error: result.Error.Error()})
-						return result.Error
+					err := usr.Dao.UpdatePassword(foralt.Email, foralt.Password)
+					if err != nil {
+						c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+						return err
 					}
-					err := usr.mail.ChangeStatus(email.Email)
+					err = usr.mail.ChangeStatus(email.Email)
 					if err != nil {
 						c.JSON(http.StatusBadRequest, response.Response{Error: "修改密码成功但是验证码状态设置失败"})
 						return fmt.Errorf("%s 修改密码成功但是验证码状态设置失败:%s", user.Email, err.Error())
@@ -257,50 +258,17 @@ func (usr *UserServiceImpl) Cancel(c *gin.Context) error {
 		return err
 	}
 	//查询用户
-	user, ok := usr.CheckUserByEmail(cancel.Email)
+	user, ok := usr.Dao.CheckUserByEmail(cancel.Email)
 	if ok { //找到了,直接硬删除
-		result := usr.db.Model(&user).Where("mail = ?", cancel.Email).Unscoped().Delete(&user)
-		if result.Error != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: result.Error.Error()})
-			return result.Error
+		err := usr.Dao.DeleteUser(cancel.Email, user)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+			return err
 		}
 		c.JSON(http.StatusOK, response.Response{Message: "用户注销成功"})
 		return nil
 	} else {
 		c.JSON(http.StatusNotFound, response.Response{Error: "用户没注册，还妄想注销账户"})
 		return fmt.Errorf("%s 用户没注册，还妄想注销账户", cancel.Email)
-	}
-}
-
-// 通过设备号，检查用户是否注册
-func (usr *UserServiceImpl) CheckUserByDevice(deviceNum string) (*model.User, bool) {
-	var user model.User
-	result := usr.db.Where("device_num = ?", deviceNum).First(&user)
-	if result.RowsAffected == 0 {
-		return &user, false
-	} else {
-		return &user, true
-	}
-}
-
-// 检查是否发送验证码，并返回email
-func (usr *UserServiceImpl) CheckSendEmail(addr string) (*model.Email, bool) {
-	var email model.Email
-	result := usr.db.Where("mail = ?", addr).First(&email)
-	if result.RowsAffected == 0 { //用户未发送验证码
-		return &email, false
-	} else {
-		return &email, true
-	}
-}
-
-// 通过邮箱查找是否有用户，并返回用户
-func (usr *UserServiceImpl) CheckUserByEmail(addr string) (*model.User, bool) {
-	var user model.User
-	result := usr.db.Where("mail = ?", addr).Find(&user)
-	if result.RowsAffected == 0 {
-		return &user, false
-	} else {
-		return &user, true
 	}
 }

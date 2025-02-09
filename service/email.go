@@ -22,7 +22,7 @@ func (usr *UserServiceImpl) SendEmail(c *gin.Context) error {
 	//生成验证码
 	code := tool.GenerateCode()
 	//先查询验证码的状态
-	emailCheck, ok := usr.CheckSendEmail(email.Email)
+	emailCheck, ok := usr.Dao.CheckSendEmail(email.Email)
 	if ok { //有验证码
 		if emailCheck.Status { //此时是有效的，重新发送,并修改验证码
 			err := usr.mail.SendEmailByQQEmail(email.Email, code)
@@ -30,22 +30,28 @@ func (usr *UserServiceImpl) SendEmail(c *gin.Context) error {
 				return fmt.Errorf("发送失败")
 			}
 			//更新验证码
-			result := usr.db.Model(&emailCheck).Where("mail = ?", email.Email).Update("code", code)
-			if result.Error != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: "更新验证码失败"})
-				return fmt.Errorf("更新验证码失败")
+			emailCheck.Code = code
+			err = usr.Dao.UpdateUserEmail(emailCheck)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+				return err
 			}
+
 		} else { //此时是无效的，重新发送，并更新验证码及其状态
 			err := usr.mail.SendEmailByQQEmail(email.Email, code)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, response.Response{Error: "发送失败"})
 				return fmt.Errorf("发送失败")
 			}
-			result := usr.db.Model(&email).Where("mail = ?", email.Email).Updates(map[string]interface{}{"code": code, "status": true})
-			if result.Error != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: "更新验证码失败"})
-				return fmt.Errorf("更新验证码失败")
+
+			emailCheck.Code = code
+			emailCheck.Status = true
+			err = usr.Dao.UpdateUserEmail(emailCheck)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+				return err
 			}
+
 		}
 	} else { //没有验证码
 		emailCheck.Status = true
@@ -56,10 +62,11 @@ func (usr *UserServiceImpl) SendEmail(c *gin.Context) error {
 			c.JSON(http.StatusBadRequest, response.Response{Error: "发送失败"})
 			return fmt.Errorf("发送失败")
 		}
-		result := usr.db.Create(&emailCheck)
-		if result.Error != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: "更新验证码失败"})
-			return fmt.Errorf("更新验证码失败")
+
+		err = usr.Dao.CreateUserEmail(emailCheck)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+			return err
 		}
 	}
 
@@ -68,12 +75,14 @@ func (usr *UserServiceImpl) SendEmail(c *gin.Context) error {
 	delay := 5 * time.Minute
 	time.AfterFunc(delay, func() {
 		//先检查状态
-		emailChe, _ := usr.CheckSendEmail(email.Email)
+		emailChe, _ := usr.Dao.CheckSendEmail(email.Email)
 		//如果状态是有效的,变成无效的
 		if emailChe.Status {
-			result := usr.db.Model(&email).Where("mail = ?", email.Email).Update("status", false)
-			if result.Error != nil {
-				log.Println("用户%v的验证码状态改变出现错误", email.Email)
+			emailChe.Status = false
+			err := usr.Dao.UpdateUserEmail(emailChe)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+				log.Println("用户%v的验证码状态改变出现错误", emailChe.Email)
 				return
 			}
 		}

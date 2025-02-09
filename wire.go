@@ -28,6 +28,10 @@ func InitApp(ConfigPath string) (*route.App, error) {
 		wire.Bind(new(service.GoalService), new(*service.GoalServiceImpl)),
 		wire.Bind(new(service.UserService), new(*service.UserServiceImpl)),
 		wire.Bind(new(service.SloganService), new(*service.SloganServiceImpl)),
+		wire.Bind(new(dao.UserDAO), new(*dao.UserDAOImpl)),
+		wire.Bind(new(dao.GoalDAO), new(*dao.GoalDAOImpl)),
+		wire.Bind(new(dao.SloganDAO), new(*dao.SloganDAOImpl)),
+		wire.Bind(new(dao.EmailDAO), new(*dao.EmailDAOImpl)),
 	)
 	return &route.App{}, nil
 }

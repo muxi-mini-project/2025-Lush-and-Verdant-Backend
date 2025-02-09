@@ -1,25 +1,24 @@
 package service
 
 import (
+	"2025-Lush-and-Verdant-Backend/dao"
 	"2025-Lush-and-Verdant-Backend/model"
-	"fmt"
-	"gorm.io/gorm"
 )
 
 type GoalService interface {
 	PostGoal(model.TasksData) error
 	UpdateGoal(uint, model.TasksData) error
-	HistoricalGoal(uint) ([]model.Task, error)
+	HistoricalGoal(uint) ([]*model.Task, error)
 	DeleteGoal(uint, string) error
 }
 
 type GoalServiceImpl struct {
-	db *gorm.DB
+	GoalDao dao.GoalDAO
 }
 
-func NewGoalServiceImpl(db *gorm.DB) *GoalServiceImpl {
+func NewGoalServiceImpl(goalDao dao.GoalDAO) *GoalServiceImpl {
 	return &GoalServiceImpl{
-		db: db,
+		GoalDao: goalDao,
 	}
 }
 
@@ -35,8 +34,9 @@ func (gsr *GoalServiceImpl) PostGoal(message model.TasksData) error {
 			IsCompleted: false,
 		}
 
-		if err := gsr.db.Create(&taskData).Error; err != nil {
-			return fmt.Errorf("任务保存失败")
+		err := gsr.GoalDao.CreatTask(&taskData)
+		if err != nil {
+			return err
 		}
 
 		for _, event := range task.Events {
@@ -47,9 +47,9 @@ func (gsr *GoalServiceImpl) PostGoal(message model.TasksData) error {
 				EndTime:     event.EndTime,
 				TaskID:      event.TaskID, // 关联任务
 			}
-
-			if err := gsr.db.Create(&eventData).Error; err != nil {
-				return fmt.Errorf("事件保存失败")
+			err := gsr.GoalDao.CreatEvent(&eventData)
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -58,50 +58,47 @@ func (gsr *GoalServiceImpl) PostGoal(message model.TasksData) error {
 
 func (gsr *GoalServiceImpl) UpdateGoal(userID uint, message model.TasksData) error {
 	for _, task := range message.Tasks {
-		var existingTask model.Task
-		if err := gsr.db.Where("id = ? AND user_id = ?", task.ID, userID).First(&existingTask).Error; err != nil {
-			return fmt.Errorf("未找到该任务")
+		existingTask, err := gsr.GoalDao.GetTask(task.ID, userID)
+		if err != nil {
+			return err
 		}
-
 		existingTask.Name = task.Name
 		existingTask.Description = task.Description
 		existingTask.StartTime = task.StartTime
 		existingTask.EndTime = task.EndTime
 		existingTask.IsCompleted = task.IsCompleted
-
-		if err := gsr.db.Save(&existingTask).Error; err != nil {
-			return fmt.Errorf("任务更新失败")
+		err = gsr.GoalDao.UpdateTask(existingTask)
+		if err != nil {
+			return err
 		}
-
 		for _, event := range task.Events {
-			var existingEvent model.Event
-			if err := gsr.db.Where("id = ? AND task_id = ?", event.ID, event.TaskID).First(&existingEvent).Error; err != nil {
-				return fmt.Errorf("未找到该事件")
+			existingEvent, err := gsr.GoalDao.GetEvent(event.ID, event.TaskID)
+			if err != nil {
+				return err
 			}
-
 			existingEvent.Name = event.Name
 			existingEvent.Description = event.Description
 			existingEvent.StartTime = event.StartTime
 			existingEvent.EndTime = event.EndTime
 
-			if err := gsr.db.Save(&existingEvent).Error; err != nil {
-				return fmt.Errorf("事件更新失败")
+			err = gsr.GoalDao.UpdateEvent(existingEvent)
+			if err != nil {
+				return err
 			}
 		}
 	}
 	return nil
 }
 
-func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) ([]model.Task, error) {
-	var tasks []model.Task
-	if err := gsr.db.Where("user_id = ?", userID).Find(&tasks).Error; err != nil {
-		return nil, fmt.Errorf("获取目标失败")
+func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) ([]*model.Task, error) {
+	tasks, err := gsr.GoalDao.GetTasks(userID)
+	if err != nil {
+		return nil, err
 	}
-
 	for i := range tasks {
-		var events []model.Event
-		if err := gsr.db.Where("task_id = ?", tasks[i].ID).Find(&events).Error; err != nil {
-			return nil, fmt.Errorf("获取事件失败")
+		events, err := gsr.GoalDao.GetEvents(tasks[i].ID)
+		if err != nil {
+			return nil, err
 		}
 		tasks[i].Events = events
 	}
@@ -110,15 +107,9 @@ func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) ([]model.Task, error) {
 }
 
 func (gsr *GoalServiceImpl) DeleteGoal(userID uint, taskID string) error {
-	var task model.Task
-
-	if err := gsr.db.Where("id = ? AND user_id = ?", taskID, userID).First(&task).Error; err != nil {
-		return fmt.Errorf("未找到该任务")
+	err := gsr.GoalDao.DeleteTask(taskID, userID)
+	if err != nil {
+		return err
 	}
-
-	if err := gsr.db.Where(&task).Error; err != nil {
-		return fmt.Errorf("任务删除失败")
-	}
-
 	return nil
 }

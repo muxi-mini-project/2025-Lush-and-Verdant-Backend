@@ -11,17 +11,7 @@ import (
 	"time"
 )
 
-type MysqlDatabase struct {
-	cfg *config.DatabaseConfig
-}
-
-func NewMysqlDatabase(cfg *config.DatabaseConfig) *MysqlDatabase {
-	return &MysqlDatabase{
-		cfg: cfg,
-	}
-}
-
-func NewDB(md *MysqlDatabase) (*gorm.DB, error) {
+func NewDB(cfg *config.DatabaseConfig) (*gorm.DB, error) {
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags), // 输出到标准输出
 		logger.Config{
@@ -30,7 +20,7 @@ func NewDB(md *MysqlDatabase) (*gorm.DB, error) {
 			Colorful:      true,        // 输出带颜色
 		},
 	)
-	db, err := gorm.Open(mysql.Open(md.cfg.Addr), &gorm.Config{
+	db, err := gorm.Open(mysql.Open(cfg.Addr), &gorm.Config{
 		Logger: newLogger,
 	})
 	if err != nil {

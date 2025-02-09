@@ -2,25 +2,26 @@ package tool
 
 import (
 	"2025-Lush-and-Verdant-Backend/config"
+	"2025-Lush-and-Verdant-Backend/dao"
 	"2025-Lush-and-Verdant-Backend/model"
 	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+
 	"math/rand"
 	"net/smtp"
 	"time"
 )
 
 type Mail struct {
-	db  *gorm.DB
-	cfg *config.QQConfig
+	EmailDao dao.EmailDAO
+	cfg      *config.QQConfig
 }
 
-func NewMail(db *gorm.DB, cfg *config.QQConfig) *Mail {
+func NewMail(emailDao dao.EmailDAO, cfg *config.QQConfig) *Mail {
 	return &Mail{
-		db:  db,
-		cfg: cfg,
+		EmailDao: emailDao,
+		cfg:      cfg,
 	}
 
 }
@@ -118,22 +119,20 @@ func GetEmailName(c *gin.Context) (string, bool) {
 }
 
 // 修改验证码状态
-func (mail *Mail) ChangeStatus(email string) error {
+func (mail *Mail) ChangeStatus(addr string) error {
 
-	var email1 model.Email
-	//查询信息
-
-	result := mail.db.Where("email=?", email).First(&email1)
-	if result.Error != nil {
-		return result.Error
+	email, err := mail.EmailDao.GetEmail(addr)
+	if err != nil {
+		return err
 	}
-	if email1.Status { //有效改为无效
-		result := mail.db.Model(&email1).Where("email=?", email).Update("status", false)
-		if result.Error != nil {
-			return result.Error
+	if email.Status { //有效改为无效
+		email.Status = false
+		err := mail.EmailDao.UpdateEmail(email)
+		if err != nil {
+			return err
 		}
 		return nil
-	} else {
+	} else { //无效的话就return
 		return nil
 	}
 }
