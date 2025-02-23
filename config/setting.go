@@ -16,6 +16,7 @@ func (vs *ViperSetting) ReadSection(k string, v interface{}) error {
 	}
 	return nil
 }
+
 func NewViperSetting(ConfigPath string) *ViperSetting {
 	vp := viper.New()            //创建实例
 	vp.SetConfigFile(ConfigPath) //配置文件路径

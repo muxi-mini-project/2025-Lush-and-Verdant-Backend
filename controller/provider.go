@@ -7,4 +7,5 @@ var ProviderSet = wire.NewSet(
 	NewUserController,
 	NewSloganController,
 	NewGoalController,
+	NewImageController,
 )

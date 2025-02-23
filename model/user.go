@@ -10,4 +10,5 @@ type User struct {
 	DeviceNum  string `gorm:"varchar(100);unique;default:null;"`
 	GoalPublic bool   `gorm:"default:false;"`
 	Slogan     string `gorm:"varchar(100);default:null;"`
+	Images     []UserImage
 }

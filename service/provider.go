@@ -6,4 +6,5 @@ var ProviderSet = wire.NewSet(
 	NewGoalServiceImpl,
 	NewSloganServiceImpl,
 	NewUserServiceImpl,
+	NewImageServiceImpl,
 )

@@ -9,19 +9,22 @@ type App struct {
 	us *UserSvc
 	ss *SloganSvc
 	gs *GoalSvc
+	is *ImageSvc
 }
 
-func NewApp(us *UserSvc, ss *SloganSvc, gs *GoalSvc) *App {
+func NewApp(us *UserSvc, ss *SloganSvc, gs *GoalSvc, is *ImageSvc) *App {
 	r := gin.Default()
 	us.NewUserGroup(r)
 	ss.SloganGroup(r)
 	gs.GoalGroup(r)
+	is.ImageGroup(r)
 
 	return &App{
 		r:  r,
 		us: us,
 		ss: ss,
 		gs: gs,
+		is: is,
 	}
 }
 

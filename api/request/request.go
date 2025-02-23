@@ -34,3 +34,7 @@ type Question struct {
 	Description string `json:"description"`
 	Cycle       string `json:"cycle"`
 }
+type Image struct {
+	Id  int    `json:"id"` //是userId或者groupId
+	Url string `json:"url"`
+}

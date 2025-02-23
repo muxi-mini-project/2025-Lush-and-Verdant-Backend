@@ -7,5 +7,6 @@ var ProviderSet = wire.NewSet(
 	NewSloganSvc,
 	NewUserSvc,
 	NewGoalSvc,
+	NewImageSvc,
 	NewApp,
 )

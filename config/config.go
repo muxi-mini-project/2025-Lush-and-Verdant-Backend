@@ -10,6 +10,7 @@ var ProviderSet = wire.NewSet(
 	NewTimeLayoutConfig,
 	NewChatGptConfig,
 	NewQQConfig,
+	NewQNYConfig,
 )
 
 type DatabaseConfig struct {
@@ -30,6 +31,13 @@ type ChatGptConfig struct {
 type QQConfig struct {
 	Email string `yaml:"email"`
 	Key   string `yaml:"key"`
+}
+
+type QiNiuYunConfig struct {
+	AccessKey string `yaml:"accessKey"`  // 七牛云提供的公钥
+	SecretKey string `yaml:"secretKey"`  // 七牛云提供的密钥
+	Bucket    string `yaml:"bucketName"` // 所创建七牛云对象存储的名称
+	Domain    string `yaml:"domainName"` // 对象存储所绑定的七牛云的域名
 }
 
 func NewDatabaseConfig(vs *ViperSetting) *DatabaseConfig {
@@ -62,4 +70,10 @@ func NewQQConfig(vs *ViperSetting) *QQConfig {
 	var qqConfig = &QQConfig{}
 	vs.ReadSection("qq", &qqConfig)
 	return qqConfig
+}
+
+func NewQNYConfig(vs *ViperSetting) *QiNiuYunConfig {
+	var qiNiuYunConfig = &QiNiuYunConfig{}
+	vs.ReadSection("qiniuyun", &qiNiuYunConfig)
+	return qiNiuYunConfig
 }

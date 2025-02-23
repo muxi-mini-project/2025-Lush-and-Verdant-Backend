@@ -46,6 +46,11 @@ func InitApp(ConfigPath string) (*route.App, error) {
 	chatGptClient := client.NewChatGptClient(chatGptConfig)
 	goalController := controller.NewGoalController(goalServiceImpl, chatGptClient)
 	goalSvc := route.NewGoalSvc(goalController)
-	app := route.NewApp(userSvc, sloganSvc, goalSvc)
+	qiNiuYunConfig := config.NewQNYConfig(viperSetting)
+	imageDAOImpl := dao.NewImageDAO(db)
+	imageServiceImpl := service.NewImageServiceImpl(qiNiuYunConfig, imageDAOImpl)
+	imageController := controller.NewImageController(imageServiceImpl)
+	imageSvc := route.NewImageSvc(imageController)
+	app := route.NewApp(userSvc, sloganSvc, goalSvc, imageSvc)
 	return app, nil
 }

@@ -8,4 +8,5 @@ var ProviderSet = wire.NewSet(
 	NewGoalDAOImpl,
 	NewSloganDAOImpl,
 	NewEmailDAOImpl,
+	NewImageDAO,
 )
