@@ -7,12 +7,24 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
+
 	"math/rand"
 	"net/smtp"
 	"time"
 )
 
-var dsn = config.Dsn
+type Mail struct {
+	EmailDao dao.EmailDAO
+	cfg      *config.QQConfig
+}
+
+func NewMail(emailDao dao.EmailDAO, cfg *config.QQConfig) *Mail {
+	return &Mail{
+		EmailDao: emailDao,
+		cfg:      cfg,
+	}
+
+}
 
 // 生成验证码
 func GenerateCode() string {
@@ -22,9 +34,9 @@ func GenerateCode() string {
 }
 
 // SendEmailByQQEmail 发送邮件函数
-func SendEmailByQQEmail(to string, code string) error {
-	from := config.QQ
-	password := config.QQKey // 邮箱授权码
+func (mail *Mail) SendEmailByQQEmail(to string, code string) error {
+	from := mail.cfg.Email
+	password := mail.cfg.Key // 邮箱授权码
 	smtpServer := "smtp.qq.com:465"
 
 	// 设置 PlainAuth
@@ -96,7 +108,7 @@ func SendEmailByQQEmail(to string, code string) error {
 	return nil
 }
 
-// 从前端获得email json格式的
+// 从前端获得email json格式的 //这个暂时没用到
 func GetEmailName(c *gin.Context) (string, bool) {
 	var email model.Email
 	if err := c.ShouldBind(&email); err != nil {
@@ -107,23 +119,20 @@ func GetEmailName(c *gin.Context) (string, bool) {
 }
 
 // 修改验证码状态
-func ChangeStatus(email string) error {
-	db := dao.NewDB(dsn)
-	var email1 model.Email
-	//查询信息
+func (mail *Mail) ChangeStatus(addr string) error {
 
-	result := db.Where("email=?", email).First(&email1)
-	if result.Error != nil {
-		return result.Error
+	email, err := mail.EmailDao.GetEmail(addr)
+	if err != nil {
+		return err
 	}
-	if email1.Status { //有效改为无效
-		result := db.Model(&email1).Where("email=?", email).Update("status", false)
-		if result.Error != nil {
-			return result.Error
+	if email.Status { //有效改为无效
+		email.Status = false
+		err := mail.EmailDao.UpdateEmail(email)
+		if err != nil {
+			return err
 		}
 		return nil
-	} else {
+	} else { //无效的话就return
 		return nil
 	}
-
 }

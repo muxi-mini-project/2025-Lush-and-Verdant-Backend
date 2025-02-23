@@ -12,7 +12,7 @@ type UserLogin struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-type Visiter struct {
+type Visitor struct {
 	Device_Num string `json:"device_num"`
 }
 type ForAlter struct {

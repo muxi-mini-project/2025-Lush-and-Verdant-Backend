@@ -1,15 +1,44 @@
 package dao
 
 import (
-	"2025-Lush-and-Verdant-Backend/config"
 	"2025-Lush-and-Verdant-Backend/model"
+	"fmt"
+	"gorm.io/gorm"
 )
 
-var dsn = config.Dsn
+type SloganDAO interface {
+	GetAllSlogan() ([]model.Slogan, error)
+	GetOneSlogan() (*model.Slogan, error)
+}
+
+type SloganDAOImpl struct {
+	db *gorm.DB
+}
+
+func NewSloganDAOImpl(db *gorm.DB) *SloganDAOImpl {
+	return &SloganDAOImpl{
+		db: db,
+	}
+}
+
+func (dao *SloganDAOImpl) GetAllSlogan() ([]model.Slogan, error) {
+	// 查找所有的激励语
+	var slogans []model.Slogan
+	if err := dao.db.Find(&slogans).Error; err != nil {
+		return nil, fmt.Errorf("无法获取激励语")
+	}
+	return slogans, nil
+}
+
+// 使用Order随机排序，选第一条slogan
+func (dao *SloganDAOImpl) GetOneSlogan() (*model.Slogan, error) {
+	var slogan model.Slogan
+	dao.db.Table("slogans").Order("RAND()").First(&slogan)
+	return &slogan, nil
+}
 
 // 对slogan库的初始化
-func CreateSlogan() {
-	db := NewDB(dsn)
+func CreateSlogan(db *gorm.DB) {
 
 	db.AutoMigrate(&model.Slogan{})
 

@@ -10,10 +10,10 @@ import (
 )
 
 type SloganController struct {
-	ssr *service.SloganService
+	ssr service.SloganService //依赖与接口
 }
 
-func NewSloganController(ssr *service.SloganService) *SloganController {
+func NewSloganController(ssr service.SloganService) *SloganController {
 	return &SloganController{
 		ssr: ssr,
 	}

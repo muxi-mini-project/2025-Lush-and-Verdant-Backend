@@ -15,6 +15,7 @@ func NewUserSvc(uc *controller.UserController) *UserSvc {
 		uc: uc,
 	}
 }
+
 func (u *UserSvc) NewUserGroup(r *gin.Engine) {
 	r.Use(middleware.Cors()) //解决跨域问题
 	userGroup := r.Group("/user")
