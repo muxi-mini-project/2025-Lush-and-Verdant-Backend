@@ -34,10 +34,10 @@ type QQConfig struct {
 }
 
 type QiNiuYunConfig struct {
-	AccessKey string `yaml:"accessKey"`  // 七牛云提供的公钥
-	SecretKey string `yaml:"secretKey"`  // 七牛云提供的密钥
-	Bucket    string `yaml:"bucketName"` // 所创建七牛云对象存储的名称
-	Domain    string `yaml:"domainName"` // 对象存储所绑定的七牛云的域名
+	AccessKey  string `yaml:"accessKey"`  // 七牛云提供的公钥
+	SecretKey  string `yaml:"secretKey"`  // 七牛云提供的密钥
+	BucketName string `yaml:"bucketName"` // 所创建七牛云对象存储的名称
+	DomainName string `yaml:"domainName"` // 对象存储所绑定的七牛云的域名
 }
 
 func NewDatabaseConfig(vs *ViperSetting) *DatabaseConfig {

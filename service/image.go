@@ -37,8 +37,9 @@ func NewImageServiceImpl(qny *config.QiNiuYunConfig, Dao dao.ImageDAO) *ImageSer
 func (isr *ImageServiceImpl) GetToken() (string, error) {
 	accessKey := isr.qny.AccessKey
 	secretKey := isr.qny.SecretKey
-	bucket := isr.qny.Bucket
-	fmt.Println(accessKey, " ", secretKey, " ", bucket, " ", isr.qny.Bucket, " ", isr.qny.Domain)
+	bucket := isr.qny.BucketName
+	//todo 这里不知道为什么莫名其妙丢了后面的两个
+	fmt.Println(accessKey, " ", secretKey, " ", bucket, " ", isr.qny.BucketName, " ", isr.qny.DomainName)
 	// mac是一个身份验证的工具
 	mac := credentials.NewCredentials(accessKey, secretKey)
 
