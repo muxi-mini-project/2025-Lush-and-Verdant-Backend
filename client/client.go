@@ -22,7 +22,7 @@ func NewChatGptClient(cfg *config.ChatGptConfig) *ChatGptClient {
 	return &ChatGptClient{cfg: cfg}
 }
 
-func (cg *ChatGptClient) AskForGoal(c *gin.Context) map[string]string {
+func (cg *ChatGptClient) AskForGoal(c *gin.Context, question request.Question) map[string]string {
 	// 设置初始配置
 	var options = []option.RequestOption{
 		option.WithBaseURL("https://api.chatanywhere.tech"), //更换了BaseURL,openai的太贵了
@@ -280,13 +280,8 @@ output:{
   ]
 }
 `
-	var message request.Question
-	if err := c.ShouldBind(&message); err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
-		return nil
-	}
 
-	messageJSON, err := json.Marshal(message) //转化为json格式的字节切片
+	messageJSON, err := json.Marshal(question) //转化为json格式的字节切片
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
 		return nil

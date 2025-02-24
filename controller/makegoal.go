@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"2025-Lush-and-Verdant-Backend/api/request"
 	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/client"
 	"2025-Lush-and-Verdant-Backend/model"
 	"2025-Lush-and-Verdant-Backend/service"
-	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"io"
 	"net/http"
 )
 
@@ -21,16 +23,47 @@ func NewGoalController(gsr service.GoalService, gpt *client.ChatGptClient) *Goal
 		gpt: gpt,
 	}
 }
-func (mc *GoalController) GetGoal(c *gin.Context) {
-	result := mc.gpt.AskForGoal(c)
 
-	dataJSON, err := json.Marshal(result)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: "解析失败"})
+func (mc *GoalController) GetGoal(c *gin.Context) {
+	var message request.Question
+	if err := c.ShouldBindJSON(&message); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Error: "请求参数错误"})
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Response{Message: "请求成功", Data: string(dataJSON)})
+	// 将数据传递给service层，获取返回结果
+	result := mc.gpt.AskForGoal(c, message)
+
+	// 初始化推送状态
+	pushed := false
+
+	// 使用SSE流式推送数据
+	c.Stream(func(w io.Writer) bool {
+		for key, value := range result {
+			// 构建要发送的消息消息
+			msg := fmt.Sprintf(`{"%s","%s"}`, key, value)
+
+			// 将消息写入响应流
+			_, err := c.Writer.Write([]byte("data:" + msg + "\n\n"))
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, response.Response{Error: "推送数据失败"})
+				return false
+			}
+
+			// 强制推送消息到客户端
+			c.Writer.Flush()
+
+			// 标记已推送
+			pushed = true
+		}
+		return true
+	})
+
+	if pushed {
+		c.JSON(http.StatusOK, response.Response{Message: "数据推送完成"})
+	} else {
+		c.JSON(http.StatusInternalServerError, response.Response{Error: "无数据被推送"})
+	}
 }
 
 func (mc *GoalController) PostGoal(c *gin.Context) {
