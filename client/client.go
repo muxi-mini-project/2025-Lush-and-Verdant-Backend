@@ -307,14 +307,14 @@ output:{
 	}
 
 	// 获取返回的内容
-	response := chatCompletion.Choices[0].Message.Content
+	responses := chatCompletion.Choices[0].Message.Content
 	//fmt.Println("Raw Response:", response)
 
 	// 匹配 JSON 格式的 key-value
 	re := regexp.MustCompile(`"([\w-]+)":\s*"([^"]+)"`)
 
 	// 提取所有匹配结果
-	matches := re.FindAllStringSubmatch(response, -1)
+	matches := re.FindAllStringSubmatch(responses, -1)
 
 	// 构造 map
 	result := make(map[string]string)
