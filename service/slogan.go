@@ -50,8 +50,8 @@ func (ssr *SloganServiceImpl) GetSlogan(device string) error {
 }
 func (ssr *SloganServiceImpl) ChangeSlogan(id uint, newSlogan request.Slogan) error {
 	user, err := ssr.UserDao.GetUserById(id)
-	if err.Error != nil {
-		return fmt.Errorf("未找到相关用户%s", err.Error)
+	if err != nil {
+		return fmt.Errorf("未找到相关用户%s", err.Error())
 	}
 	user.Slogan = newSlogan.Slogan
 	err = ssr.UserDao.UpdateUser(user)

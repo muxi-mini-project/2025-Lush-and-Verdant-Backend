@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:generate mockgen -source=./image.go -package=daomock -destination=./mocks/image_mock.go ImageDAO
 type ImageDAO interface {
 	CreateUserImage(image *model.UserImage) error
 	GetUserImage(user *model.User) (string, error)

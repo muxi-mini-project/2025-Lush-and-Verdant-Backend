@@ -82,7 +82,7 @@ func (usr *UserServiceImpl) SendEmail(c *gin.Context) error {
 			err := usr.Dao.UpdateUserEmail(emailChe)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
-				log.Println("用户%v的验证码状态改变出现错误", emailChe.Email)
+				log.Printf("用户%v的验证码状态改变出现错误\n", emailChe.Email)
 				return
 			}
 		}
