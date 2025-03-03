@@ -2,7 +2,7 @@
 // Source: ./image.go
 
 // Package daomock is a generated GoMock package.
-package daomock
+package mock
 
 import (
 	model "2025-Lush-and-Verdant-Backend/model"
