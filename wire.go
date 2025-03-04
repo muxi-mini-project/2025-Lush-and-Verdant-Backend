@@ -34,6 +34,7 @@ func InitApp(ConfigPath string) (*route.App, error) {
 		wire.Bind(new(dao.SloganDAO), new(*dao.SloganDAOImpl)),
 		wire.Bind(new(dao.EmailDAO), new(*dao.EmailDAOImpl)),
 		wire.Bind(new(dao.ImageDAO), new(*dao.ImageDAOImpl)),
+		wire.Bind(new(dao.EmailCodeDAO), new(*dao.EmailCodeDAOImpl)),
 	)
 	return &route.App{}, nil
 }

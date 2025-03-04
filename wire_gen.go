@@ -21,19 +21,25 @@ import (
 
 func InitApp(ConfigPath string) (*route.App, error) {
 	viperSetting := config.NewViperSetting(ConfigPath)
-	databaseConfig := config.NewDatabaseConfig(viperSetting)
-	db, err := dao.NewDB(databaseConfig)
+	mySQLConfig := config.NewMySQLConfig(viperSetting)
+	db, err := dao.MySQLDB(mySQLConfig)
 	if err != nil {
 		return nil, err
 	}
 	userDAOImpl := dao.NewUserDAO(db)
+	redisConfig := config.NewRedisConfig(viperSetting)
+	redisClient, err := dao.RedisDB(redisConfig)
+	if err != nil {
+		return nil, err
+	}
+	emailCodeDAOImpl := dao.NewEmailCodeDAOImpl(redisClient)
 	jwtConfig := config.NewJwtConfig(viperSetting)
 	jwtClient := middleware.NewJwtClient(jwtConfig)
 	emailDAOImpl := dao.NewEmailDAOImpl(db)
 	qqConfig := config.NewQQConfig(viperSetting)
 	mail := tool.NewMail(emailDAOImpl, qqConfig)
 	priConfig := config.NewPriConfig(viperSetting)
-	userServiceImpl := service.NewUserServiceImpl(userDAOImpl, jwtClient, mail, priConfig)
+	userServiceImpl := service.NewUserServiceImpl(userDAOImpl, emailCodeDAOImpl, jwtClient, mail, priConfig)
 	userController := controller.NewUserController(userServiceImpl)
 	userSvc := route.NewUserSvc(userController)
 	sloganDAOImpl := dao.NewSloganDAOImpl(db)

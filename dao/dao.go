@@ -2,7 +2,9 @@ package dao
 
 import (
 	"2025-Lush-and-Verdant-Backend/config"
+	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -11,7 +13,7 @@ import (
 	"time"
 )
 
-func NewDB(cfg *config.DatabaseConfig) (*gorm.DB, error) {
+func MySQLDB(cfg *config.MySQLConfig) (*gorm.DB, error) {
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags), // 输出到标准输出
 		logger.Config{
@@ -37,5 +39,24 @@ func NewDB(cfg *config.DatabaseConfig) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(10)  // 设置最大空闲连接数
 
 	return db, nil
+}
 
+func RedisDB(cfg *config.RedisConfig) (*redis.Client, error) {
+	// 创建Redis客户端
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     cfg.Addr,     // redis地址
+		Password: cfg.Password, // Redis认证密码(可选)
+		DB:       cfg.DB,       // 选择的数据库
+	})
+
+	// 测试连接
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := rdb.Ping(ctx).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect redis: %v", err)
+	}
+
+	return rdb, nil
 }

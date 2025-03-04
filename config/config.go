@@ -4,7 +4,8 @@ import "github.com/google/wire"
 
 var ProviderSet = wire.NewSet(
 	NewViperSetting,
-	NewDatabaseConfig,
+	NewMySQLConfig,
+	NewRedisConfig,
 	NewJwtConfig,
 	NewPriConfig,
 	NewTimeLayoutConfig,
@@ -13,21 +14,26 @@ var ProviderSet = wire.NewSet(
 	NewQNYConfig,
 )
 
-type DatabaseConfig struct {
+type MySQLConfig struct {
 	Addr string `yaml:"addr"`
 }
+
 type JwtConfig struct {
 	SecretKey string `yaml:"secretkey"`
 }
+
 type PriConfig struct {
 	Name string `yaml:"name"`
 }
+
 type TimeLayoutConfig struct {
 	Template string `yaml:"template"`
 }
+
 type ChatGptConfig struct {
 	Sdk string `yaml:"sdk"`
 }
+
 type QQConfig struct {
 	Email string `yaml:"email"`
 	Key   string `yaml:"key"`
@@ -40,10 +46,22 @@ type QiNiuYunConfig struct {
 	DomainName string `yaml:"domainName"` // 对象存储所绑定的七牛云的域名
 }
 
-func NewDatabaseConfig(vs *ViperSetting) *DatabaseConfig {
-	var databaseConfig = &DatabaseConfig{}
+type RedisConfig struct {
+	Addr     string `yaml:"addr"`
+	Password string `yaml:"password"`
+	DB       int    `yaml:"db"`
+}
+
+func NewMySQLConfig(vs *ViperSetting) *MySQLConfig {
+	var databaseConfig = &MySQLConfig{}
 	vs.ReadSection("database", &databaseConfig)
 	return databaseConfig
+}
+
+func NewRedisConfig(vs *ViperSetting) *RedisConfig {
+	var redisConfig = &RedisConfig{}
+	vs.ReadSection("redis", &redisConfig)
+	return redisConfig
 }
 
 func NewJwtConfig(vs *ViperSetting) *JwtConfig {
