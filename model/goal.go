@@ -16,7 +16,7 @@ type Event struct {
 	TaskID      uint       `json:"task_id"` // 外键，关联任务
 }
 
-// Task  结构体表示任务，包含多个事件
+// Task 结构体表示任务，包含多个事件
 type Task struct {
 	ID          uint       `json:"id" gorm:"primaryKey"`
 	Name        string     `json:"name"`

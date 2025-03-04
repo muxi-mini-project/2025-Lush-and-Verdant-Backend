@@ -48,6 +48,7 @@ func (ssr *SloganServiceImpl) GetSlogan(device string) error {
 	}
 	return nil
 }
+
 func (ssr *SloganServiceImpl) ChangeSlogan(id uint, newSlogan request.Slogan) error {
 	user, err := ssr.UserDao.GetUserById(id)
 	if err != nil {

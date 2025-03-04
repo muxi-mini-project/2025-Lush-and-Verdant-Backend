@@ -6,7 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-//go:generate mockgen -source=./image.go -package=daomock -destination=./mocks/image_mock.go ImageDAO
 type ImageDAO interface {
 	CreateUserImage(image *model.UserImage) error
 	GetUserImage(user *model.User) (string, error)
@@ -25,7 +24,7 @@ func NewImageDAO(db *gorm.DB) *ImageDAOImpl {
 	}
 }
 
-//通过userId获取image的最新url
+// 通过userId获取image的最新url
 
 func (dao *ImageDAOImpl) GetUserImage(user *model.User) (string, error) {
 	dao.db.Preload("Images").Find(user)

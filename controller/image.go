@@ -47,14 +47,14 @@ func (ic *ImageController) GetUserImage(c *gin.Context) {
 }
 
 func (ic *ImageController) GetUserAllImage(c *gin.Context) {
-	//获取id
+	// 获取id
 	idstr := c.Param("id")
 	id, err := strconv.Atoi(idstr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{Error: "id传输错误"})
 		return
 	}
-	//得到url
+	// 得到url
 	var user model.User
 	user.ID = uint(id)
 	urls, err := ic.isr.GetUserAllImage(&user)
@@ -82,7 +82,7 @@ func (ic *ImageController) UpdateUserImage(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Message: "更新成功"})
 }
 
-//group
+// group
 
 func (ic *ImageController) GetGroupImage(c *gin.Context) {
 	idstr := c.Param("id")
@@ -102,14 +102,14 @@ func (ic *ImageController) GetGroupImage(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Data: url})
 }
 func (ic *ImageController) GetGroupAllImage(c *gin.Context) {
-	//获取id
+	// 获取id
 	idstr := c.Param("id")
 	id, err := strconv.Atoi(idstr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{Error: "id传输错误"})
 		return
 	}
-	//得到url
+	// 得到url
 	var group model.Group
 	group.ID = uint(id)
 	urls, err := ic.isr.GetGroupAllImage(&group)
@@ -130,7 +130,7 @@ func (ic *ImageController) UpdateGroupImage(c *gin.Context) {
 	var image model.GroupImage
 	image.GroupID = uint(imageRequest.Id)
 	image.Url = imageRequest.Url
-	//查询group，获得group对象
+	// 查询group，获得group对象
 
 	// todo 检测权限
 	err := ic.isr.UpdateGroupImage(&image)

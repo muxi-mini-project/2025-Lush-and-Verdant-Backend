@@ -28,8 +28,8 @@ func NewMail(emailDao dao.EmailDAO, cfg *config.QQConfig) *Mail {
 
 // 生成验证码
 func GenerateCode() string {
-	rand.Seed(time.Now().UnixNano()) //以纳米为级别
-	code := rand.Intn(1000000)       //生成6位数的验证码
+	rand.Seed(time.Now().UnixNano()) // 以纳米为级别
+	code := rand.Intn(1000000)       // 生成6位数的验证码
 	return fmt.Sprintf("%06d", code)
 }
 

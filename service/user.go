@@ -4,8 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//创建接口
-
+// 创建接口
 type UserService interface {
 	UserRegister(*gin.Context) error
 	UserLogin(*gin.Context) error
