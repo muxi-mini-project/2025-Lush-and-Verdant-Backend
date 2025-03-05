@@ -24,6 +24,17 @@ func NewGoalController(gsr service.GoalService, gpt *client.ChatGptClient) *Goal
 	}
 }
 
+// GetGoal 获取目标
+// @Summary 获取目标
+// @Description 获取目标数据
+// @Tags 目标管理
+// @Accept json
+// @Produce json
+// @Param request body request.Question true "请求问题"
+// @Success 200 {object} response.Response "数据推送完成"
+// @Failure 400 {object} response.Response "请求参数错误"
+// @Failure 500 {object} response.Response "推送数据失败"
+// @Router /goal/GetGoal [get]
 func (mc *GoalController) GetGoal(c *gin.Context) {
 	var message request.Question
 	if err := c.ShouldBindJSON(&message); err != nil {
@@ -66,6 +77,18 @@ func (mc *GoalController) GetGoal(c *gin.Context) {
 	}
 }
 
+// PostGoal 创建目标
+// @Summary 创建目标
+// @Description 用户创建新目标
+// @Tags 目标管理
+// @Accept json
+// @Produce json
+// @Param request body model.TasksData true "任务数据"
+// @Success 200 {object} response.Response "保存成功"
+// @Failure 400 {object} response.Response "解析失败"
+// @Failure 401 {object} response.Response "用户未授权"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /goal/MakeGoal [post]
 func (mc *GoalController) PostGoal(c *gin.Context) {
 	var message model.TasksData
 	if err := c.ShouldBind(message); err != nil {
@@ -74,7 +97,7 @@ func (mc *GoalController) PostGoal(c *gin.Context) {
 	}
 
 	// 从上下文获取userID
-	userID, exists := c.Get("UserID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, response.Response{Error: "用户未授权"})
 		return
@@ -93,6 +116,18 @@ func (mc *GoalController) PostGoal(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Message: "保存成功"})
 }
 
+// UpdateGoal 更新目标
+// @Summary 更新目标
+// @Description 用户更新目标信息
+// @Tags 目标管理
+// @Accept json
+// @Produce json
+// @Param request body model.TasksData true "更新的任务数据"
+// @Success 200 {object} response.Response "目标更新成功"
+// @Failure 400 {object} response.Response "解析失败"
+// @Failure 401 {object} response.Response "用户未授权"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /goal/UpdateGoal [put]
 func (mc *GoalController) UpdateGoal(c *gin.Context) {
 	var message model.TasksData // 绑定请求中的数据到message结构体
 	if err := c.ShouldBindJSON(&message); err != nil {
@@ -100,7 +135,7 @@ func (mc *GoalController) UpdateGoal(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("UserID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, response.Response{Error: "用户未授权"})
 		return
@@ -119,8 +154,18 @@ func (mc *GoalController) UpdateGoal(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Message: "目标更新成功"})
 }
 
+// HistoricalGoal 查询历史目标
+// @Summary 查询历史目标
+// @Description 用户获取历史目标列表
+// @Tags 目标管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response "请求成功"
+// @Failure 401 {object} response.Response "用户未授权"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /goal/HistoricalGoal [get]
 func (mc *GoalController) HistoricalGoal(c *gin.Context) {
-	userID, exists := c.Get("UserID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, response.Response{Error: "用户未授权"})
 		return
@@ -135,10 +180,21 @@ func (mc *GoalController) HistoricalGoal(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Message: "请求成功", Data: goals})
 }
 
+// DeleteGoal 删除目标
+// @Summary 删除目标
+// @Description 用户删除指定目标
+// @Tags 目标管理
+// @Accept json
+// @Produce json
+// @Param task_id path int true "任务ID"
+// @Success 200 {object} response.Response "目标删除成功"
+// @Failure 401 {object} response.Response "用户未授权"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /goal/DeleteGoal/{task_id} [delete]
 func (mc *GoalController) DeleteGoal(c *gin.Context) {
 	taskID := c.Param("task_id")
 
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, response.Response{Error: "用户未授权"})
 		return

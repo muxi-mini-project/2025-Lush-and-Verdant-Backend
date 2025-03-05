@@ -1,0 +1,713 @@
+definitions:
+  model.Event:
+    properties:
+      description:
+        type: string
+      end_time:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      start_time:
+        type: string
+      task_id:
+        description: 外键，关联任务
+        type: integer
+    type: object
+  model.Task:
+    properties:
+      description:
+        type: string
+      end_time:
+        type: string
+      events:
+        description: 任务下的多个事件
+        items:
+          $ref: '#/definitions/model.Event'
+        type: array
+      id:
+        type: integer
+      is_completed:
+        description: 检测任务是否完成
+        type: boolean
+      name:
+        type: string
+      start_time:
+        type: string
+      user_id:
+        description: 外键，关联用户
+        type: integer
+    type: object
+  model.TasksData:
+    properties:
+      tasks:
+        description: 一个任务列表
+        items:
+          $ref: '#/definitions/model.Task'
+        type: array
+    type: object
+  request.ForAlter:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  request.Image:
+    properties:
+      id:
+        description: 是userId或者groupId
+        type: integer
+      url:
+        type: string
+    type: object
+  request.Question:
+    properties:
+      cycle:
+        type: string
+      description:
+        type: string
+      topic:
+        type: string
+    type: object
+  request.Slogan:
+    properties:
+      slogan:
+        type: string
+    type: object
+  request.UserCancel:
+    properties:
+      email:
+        type: string
+    type: object
+  request.UserLogin:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  request.UserRegister:
+    properties:
+      code:
+        type: string
+      device_num:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  request.Visitor:
+    properties:
+      device_num:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      token:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /get_token:
+    get:
+      consumes:
+      - application/json
+      description: 获取用于上传图片的token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取上传的token
+      tags:
+      - image
+  /goal/DeleteGoal/{task_id}:
+    delete:
+      consumes:
+      - application/json
+      description: 用户删除指定目标
+      parameters:
+      - description: 任务ID
+        in: path
+        name: task_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 目标删除成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 用户未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除目标
+      tags:
+      - 目标管理
+  /goal/GetGoal:
+    get:
+      consumes:
+      - application/json
+      description: 获取目标数据
+      parameters:
+      - description: 请求问题
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.Question'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 数据推送完成
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 推送数据失败
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取目标
+      tags:
+      - 目标管理
+  /goal/HistoricalGoal:
+    get:
+      consumes:
+      - application/json
+      description: 用户获取历史目标列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 请求成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 用户未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 查询历史目标
+      tags:
+      - 目标管理
+  /goal/MakeGoal:
+    post:
+      consumes:
+      - application/json
+      description: 用户创建新目标
+      parameters:
+      - description: 任务数据
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.TasksData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 保存成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 解析失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 用户未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 创建目标
+      tags:
+      - 目标管理
+  /goal/UpdateGoal:
+    put:
+      consumes:
+      - application/json
+      description: 用户更新目标信息
+      parameters:
+      - description: 更新的任务数据
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.TasksData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 目标更新成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 解析失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 用户未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新目标
+      tags:
+      - 目标管理
+  /image/group/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 获取群组的头像
+      parameters:
+      - description: 群组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取群组图片
+      tags:
+      - image
+  /image/group/history/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 获取群组上传的所有图片
+      parameters:
+      - description: 群组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取所有群组图片
+      tags:
+      - image
+  /image/group/update:
+    put:
+      consumes:
+      - application/json
+      description: 更新群组的头像
+      parameters:
+      - description: 图片请求体
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.Image'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新群组头像
+      tags:
+      - image
+  /image/user/get/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户ID获取用户的头像
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取用户图片
+      tags:
+      - image
+  /image/user/history/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户上传的所有图片
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取所有用户图片
+      tags:
+      - image
+  /image/user/update:
+    put:
+      consumes:
+      - application/json
+      description: 更新用户的头像
+      parameters:
+      - description: 图片请求体
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.Image'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新用户头像
+      tags:
+      - image
+  /slogan/ChangeSlogan/{user_id}:
+    put:
+      consumes:
+      - application/json
+      description: 根据用户ID修改激励语
+      parameters:
+      - description: 用户ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: 新的激励语
+        in: body
+        name: slogan
+        required: true
+        schema:
+          $ref: '#/definitions/request.Slogan'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 激励语更新成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 无该用户 或 其他错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新激励语
+      tags:
+      - 标语
+  /slogan/GetSlogan/{device_num}:
+    get:
+      consumes:
+      - application/json
+      description: 根据设备号获取激励语
+      parameters:
+      - description: 设备号
+        in: path
+        name: device_num
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取激励语成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 设备号不能为空 或 其他错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取激励语
+      tags:
+      - 标语
+  /user/cancel:
+    post:
+      consumes:
+      - application/json
+      description: 允许用户注销账号
+      parameters:
+      - description: '注销信息 {email: string, password: string}'
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserCancel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 注销成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 用户注销
+      tags:
+      - 用户
+  /user/foralt:
+    post:
+      consumes:
+      - application/json
+      description: 允许用户找回或更改密码
+      parameters:
+      - description: 密码修改信息
+        in: body
+        name: resetData
+        required: true
+        schema:
+          $ref: '#/definitions/request.ForAlter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 密码修改成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 验证码错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 忘记密码/修改密码
+      tags:
+      - 用户
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      description: 通过邮箱和密码登录
+      parameters:
+      - description: 用户登录信息
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserLogin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 用户登录
+      tags:
+      - 用户
+  /user/login_v:
+    post:
+      consumes:
+      - application/json
+      description: 允许游客模式登录，无需账号
+      parameters:
+      - description: 用户游客登陆
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.Visitor'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 游客登录成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 游客登录
+      tags:
+      - 用户
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: 通过邮箱和密码注册新用户
+      parameters:
+      - description: 用户注册信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserRegister'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 注册成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 用户注册
+      tags:
+      - 用户
+  /user/send_email:
+    post:
+      consumes:
+      - application/json
+      description: 通过用户提供的邮箱发送验证码
+      parameters:
+      - description: 用户邮箱
+        in: body
+        name: email
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 验证码发送成功
+          schema:
+            type: string
+        "400":
+          description: 请求错误
+          schema:
+            type: string
+        "500":
+          description: 服务器错误
+          schema:
+            type: string
+      summary: 发送邮箱验证码
+      tags:
+      - 用户
+swagger: "2.0"

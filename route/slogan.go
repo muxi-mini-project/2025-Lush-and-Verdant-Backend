@@ -21,6 +21,6 @@ func (u *SloganSvc) SloganGroup(r *gin.Engine) {
 	Slogans := r.Group("/slogan")
 	{
 		Slogans.GET("/GetSlogan/:device_num", u.uc.GetSlogan)
-		Slogans.PUT("/ChangeSlogan", u.uc.ChangeSlogan)
+		Slogans.PUT("/ChangeSlogan/:user_id", u.uc.ChangeSlogan)
 	}
 }

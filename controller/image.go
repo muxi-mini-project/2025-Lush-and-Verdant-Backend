@@ -18,7 +18,15 @@ func NewImageController(isr service.ImageService) *ImageController {
 	return &ImageController{isr: isr}
 }
 
-// 获取上传的token
+// GetUpToken 获取上传的token
+// @Summary 获取上传的token
+// @Description 获取用于上传图片的token
+// @Tags image
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /get_token [get]
 func (ic *ImageController) GetUpToken(c *gin.Context) {
 	uptoken, err := ic.isr.GetToken()
 	if err != nil {
@@ -28,6 +36,17 @@ func (ic *ImageController) GetUpToken(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Message: "获取成功", Token: uptoken})
 }
 
+// GetUserImage 获取用户图片
+// @Summary 获取用户图片
+// @Description 根据用户ID获取用户的头像
+// @Tags image
+// @Accept json
+// @Produce json
+// @Param id path int true "用户ID"
+// @Success 200 {object} response.Response
+// @Failure 400 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /image/user/get/{id} [get]
 func (ic *ImageController) GetUserImage(c *gin.Context) {
 	idstr := c.Param("id")
 	id, err := strconv.Atoi(idstr)
@@ -46,6 +65,17 @@ func (ic *ImageController) GetUserImage(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Data: url})
 }
 
+// GetUserAllImage 获取所有用户图片
+// @Summary 获取所有用户图片
+// @Description 获取用户上传的所有图片
+// @Tags image
+// @Accept json
+// @Produce json
+// @Param id path int true "用户ID"
+// @Success 200 {object} response.Response
+// @Failure 400 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /image/user/history/{id} [get]
 func (ic *ImageController) GetUserAllImage(c *gin.Context) {
 	// 获取id
 	idstr := c.Param("id")
@@ -65,6 +95,17 @@ func (ic *ImageController) GetUserAllImage(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Data: urls})
 }
 
+// UpdateUserImage 更新用户头像
+// @Summary 更新用户头像
+// @Description 更新用户的头像
+// @Tags image
+// @Accept json
+// @Produce json
+// @Param data body request.Image true "图片请求体"
+// @Success 200 {object} response.Response
+// @Failure 400 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /image/user/update [put]
 func (ic *ImageController) UpdateUserImage(c *gin.Context) {
 	var imageRequest request.Image
 	if err := c.ShouldBindJSON(&imageRequest); err != nil {
@@ -82,8 +123,17 @@ func (ic *ImageController) UpdateUserImage(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Message: "更新成功"})
 }
 
-// group
-
+// GetGroupImage 获取群组图片
+// @Summary 获取群组图片
+// @Description 获取群组的头像
+// @Tags image
+// @Accept json
+// @Produce json
+// @Param id path int true "群组ID"
+// @Success 200 {object} response.Response
+// @Failure 400 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /image/group/{id} [get]
 func (ic *ImageController) GetGroupImage(c *gin.Context) {
 	idstr := c.Param("id")
 	id, err := strconv.Atoi(idstr)
@@ -101,6 +151,18 @@ func (ic *ImageController) GetGroupImage(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response.Response{Data: url})
 }
+
+// GetGroupAllImage 获取所有群组图片
+// @Summary 获取所有群组图片
+// @Description 获取群组上传的所有图片
+// @Tags image
+// @Accept json
+// @Produce json
+// @Param id path int true "群组ID"
+// @Success 200 {object} response.Response
+// @Failure 400 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /image/group/history/{id} [get]
 func (ic *ImageController) GetGroupAllImage(c *gin.Context) {
 	// 获取id
 	idstr := c.Param("id")
@@ -120,6 +182,18 @@ func (ic *ImageController) GetGroupAllImage(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.Response{Data: urls})
 }
+
+// UpdateGroupImage 更新群组头像
+// @Summary 更新群组头像
+// @Description 更新群组的头像
+// @Tags image
+// @Accept json
+// @Produce json
+// @Param data body request.Image true "图片请求体"
+// @Success 200 {object} response.Response
+// @Failure 400 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /image/group/update [put]
 func (ic *ImageController) UpdateGroupImage(c *gin.Context) {
 	var imageRequest request.Image
 	if err := c.ShouldBindJSON(&imageRequest); err != nil {
