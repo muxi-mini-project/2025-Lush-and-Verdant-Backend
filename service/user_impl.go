@@ -6,6 +6,7 @@ import (
 	"2025-Lush-and-Verdant-Backend/config"
 	"2025-Lush-and-Verdant-Backend/dao"
 	"2025-Lush-and-Verdant-Backend/middleware"
+	"2025-Lush-and-Verdant-Backend/model"
 	"2025-Lush-and-Verdant-Backend/tool"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -57,60 +58,43 @@ func (usr *UserServiceImpl) UserRegister(c *gin.Context) error {
 			}
 
 			log.Printf("register user %v success", user.Email)
-			err = usr.mail.ChangeStatus(userRegister.Email)
-			if err != nil {
-				log.Println("转正完成但验证码未修改成功")
-				log.Println(err)
-				c.JSON(http.StatusBadRequest, response.Response{Error: "转正完成但验证码未修改成功"})
-				return err
-			}
 			c.JSON(http.StatusOK, response.Response{Message: "游客转正成功"})
 			return nil
 		} else {
 			c.JSON(http.StatusTooManyRequests, response.Response{Error: "用户已注册"})
 			return fmt.Errorf("用户已注册")
 		}
-	} else { // 没有用户
-		// 先查询验证码的状态
-		email, ok := usr.Dao.CheckSendEmail(userRegister.Email)
-		if ok { // 有验证码
-			if email.Status { // 验证码有效
-				if strings.Compare(email.Code, userRegister.Code) == 0 { // 验证码验证成功
-					// 此时注册用户
-					user.Username = userRegister.Username
-					user.Password = userRegister.Password
-					user.Email = userRegister.Email
-					user.DeviceNum = userRegister.Device_Num
-					// 创建新用户
-					err := usr.Dao.CreateUser(user)
-					if err != nil {
-						c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
-						return err
-					}
-					log.Printf("register user %v success", user.Email)
-					err = usr.mail.ChangeStatus(userRegister.Email)
-					if err != nil {
-						log.Println("注册完成但验证码未修改成功")
-						log.Println(err)
-						c.JSON(http.StatusBadRequest, response.Response{Error: "注册完成但验证码未修改成功"})
-						return err
-					}
-					c.JSON(http.StatusOK, response.Response{Message: "用户注册成功"})
-					return nil // 用户注册成功
-
-				} else {
-					c.JSON(http.StatusBadRequest, response.Response{Error: "验证码错误"})
-					return fmt.Errorf("验证码错误")
-				}
-			} else {
-				c.JSON(http.StatusOK, response.Response{Error: "验证码无效"})
-				return fmt.Errorf("验证码无效")
-			}
-		} else {
-			c.JSON(http.StatusNotFound, response.Response{Error: "用户未发送验证码"})
-			return fmt.Errorf("用户未发送验证码")
-		}
 	}
+
+	storedCode, err := usr.EmailCodeDAO.GetEmailCode(userRegister.Email)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Response{Error: "验证码不存在或已过期"})
+		return fmt.Errorf("验证码不存在或已过期")
+	}
+
+	if storedCode != userRegister.Code {
+		c.JSON(http.StatusBadRequest, response.Response{Error: "验证码错误"})
+		return fmt.Errorf("验证码错误")
+	}
+
+	newUser := model.User{
+		Username:  userRegister.Username,
+		Password:  userRegister.Password,
+		Email:     userRegister.Email,
+		DeviceNum: userRegister.Device_Num,
+	}
+	if err := usr.Dao.CreateUser(&newUser); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
+		return err
+	}
+
+	log.Printf("register user %v success", newUser.Email)
+
+	// 删除Redis中的验证码
+	usr.EmailCodeDAO.DeleteEmailCode(newUser.Email)
+
+	c.JSON(http.StatusOK, response.Response{Message: "用户注册成功"})
+	return nil
 }
 
 // 用户登录
@@ -211,44 +195,29 @@ func (usr *UserServiceImpl) ForForAlt(c *gin.Context) error {
 		return err
 	}
 
-	// 先查有没有该用户
-	user, ok := usr.Dao.CheckUserByEmail(foralt.Email)
-	if ok { // 有用户
-		// 查询验证码
-		email, ok := usr.Dao.CheckSendEmail(foralt.Email)
-		if ok { // 查询到验证码
-			if email.Status { // 验证码有效
-				if strings.Compare(email.Code, foralt.Code) == 0 { // 验证码正确
-					err := usr.Dao.UpdatePassword(foralt.Email, foralt.Password)
-					if err != nil {
-						c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
-						return err
-					}
-					err = usr.mail.ChangeStatus(email.Email)
-					if err != nil {
-						c.JSON(http.StatusBadRequest, response.Response{Error: "修改密码成功但是验证码状态设置失败"})
-						return fmt.Errorf("%s 修改密码成功但是验证码状态设置失败:%s", user.Email, err.Error())
-					}
-					c.JSON(http.StatusOK, response.Response{Message: "修改密码成功"})
-					return nil
-				} else {
-					c.JSON(http.StatusConflict, response.Response{Error: "验证码错误"})
-					return fmt.Errorf("验证码错误")
-				}
-			} else { // 验证码失效
-				c.JSON(http.StatusBadRequest, response.Response{Error: "验证码失效"})
-				return fmt.Errorf("验证码失效")
-			}
-		} else { // 未查询到验证码
-			c.JSON(http.StatusBadRequest, response.Response{Error: "没有发验证码"})
-			return fmt.Errorf("没有发验证码")
-		}
-	} else { // 没有用户
-		c.JSON(http.StatusNotFound, response.Response{Error: "没有该用户"})
-		return fmt.Errorf("没有该用户")
-
+	storedCode, err := usr.EmailCodeDAO.GetEmailCode(foralt.Email)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.Response{Error: "验证码不存在或已过期"})
+		return fmt.Errorf("验证码不存在或已过期")
 	}
 
+	if storedCode != foralt.Code {
+		c.JSON(http.StatusBadRequest, response.Response{Error: "验证码错误"})
+		return fmt.Errorf("验证码错误")
+	}
+
+	if err := usr.Dao.UpdatePassword(foralt.Email, foralt.Password); err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{Error: "修改密码失败"})
+		return err
+	}
+
+	log.Printf("user %v changed password successfully", foralt.Email)
+
+	// 删除Redis中的验证码
+	usr.EmailCodeDAO.DeleteEmailCode(foralt.Email)
+
+	c.JSON(http.StatusOK, response.Response{Message: "修改密码成功"})
+	return nil
 }
 
 // 用户注销

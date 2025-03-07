@@ -40,7 +40,7 @@ func (uc *SloganController) GetSlogan(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
 	}
-	c.JSON(http.StatusOK, "获取激励语成功")
+	c.JSON(http.StatusOK, response.Response{Message: "获取激励语成功"})
 }
 
 // ChangeSlogan 更新激励语

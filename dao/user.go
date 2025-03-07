@@ -42,7 +42,7 @@ func (dao *UserDAOImpl) GetUserById(id uint) (*model.User, error) {
 // 通过邮箱查找是否有用户，并返回用户
 func (dao *UserDAOImpl) CheckUserByEmail(addr string) (*model.User, bool) {
 	var user model.User
-	result := dao.db.Where("mail = ?", addr).Find(&user)
+	result := dao.db.Where("email = ?", addr).Find(&user)
 	if result.RowsAffected == 0 {
 		return &user, false
 	} else {
@@ -53,7 +53,7 @@ func (dao *UserDAOImpl) CheckUserByEmail(addr string) (*model.User, bool) {
 // 检查是否发送验证码，并返回email
 func (dao *UserDAOImpl) CheckSendEmail(addr string) (*model.Email, bool) {
 	var email model.Email
-	result := dao.db.Where("mail = ?", addr).First(&email)
+	result := dao.db.Where("email = ?", addr).First(&email)
 	if result.RowsAffected == 0 { //用户未发送验证码
 		return &email, false
 	} else {

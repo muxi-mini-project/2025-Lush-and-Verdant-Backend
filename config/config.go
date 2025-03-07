@@ -69,21 +69,25 @@ func NewJwtConfig(vs *ViperSetting) *JwtConfig {
 	vs.ReadSection("jwt", &jwtConfig)
 	return jwtConfig
 }
+
 func NewPriConfig(vs *ViperSetting) *PriConfig {
 	var priConfig = &PriConfig{}
 	vs.ReadSection("pri", &priConfig)
 	return priConfig
 }
+
 func NewTimeLayoutConfig(vs *ViperSetting) *TimeLayoutConfig {
 	var timeLayoutConfig = &TimeLayoutConfig{}
 	vs.ReadSection("timelayout", &timeLayoutConfig)
 	return timeLayoutConfig
 }
+
 func NewChatGptConfig(vs *ViperSetting) *ChatGptConfig {
 	var chatGptConfig = &ChatGptConfig{}
 	vs.ReadSection("chatgpt", &chatGptConfig)
 	return chatGptConfig
 }
+
 func NewQQConfig(vs *ViperSetting) *QQConfig {
 	var qqConfig = &QQConfig{}
 	vs.ReadSection("qq", &qqConfig)
