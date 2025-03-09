@@ -43,7 +43,7 @@ func (uc *UserController) Register(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param credentials body request.UserLogin true "用户登录信息"
-// @Success 200 {object} response.Response "登录成功"
+// @Success 200 {object} response.Response{data=response.Token} "登录成功"
 // @Failure 400 {object} response.Response "请求参数错误"
 // @Failure 401 {object} response.Response "认证失败"
 // @Failure 500 {object} response.Response "服务器错误"
@@ -63,7 +63,7 @@ func (uc *UserController) Login(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param user body request.Visitor true "用户游客登陆"
-// @Success 200 {object} response.Response "游客登录成功"
+// @Success 200 {object} response.Response{data=response.Token} "游客登录成功"
 // @Failure 500 {object} response.Response "服务器错误"
 // @Router /user/login_v [post]
 func (uc *UserController) Login_v(c *gin.Context) {

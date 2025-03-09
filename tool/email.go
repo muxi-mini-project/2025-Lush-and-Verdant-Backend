@@ -121,7 +121,7 @@ func GetEmailName(c *gin.Context) (string, bool) {
 // StoreCodeInRedis 存储验证码到Redis
 func (mail *Mail) StoreCodeInRedis(email string, code string) error {
 	ctx := context.Background()
-	key := fmt.Sprintf("email_code:%s", email)
+	key := email
 	expiration := 5 * time.Minute // 设置验证码有效期为5分钟
 
 	err := mail.RedisClient.Set(ctx, key, code, expiration).Err()
@@ -134,7 +134,7 @@ func (mail *Mail) StoreCodeInRedis(email string, code string) error {
 // VerifyCode 校验验证码
 func (mail *Mail) VerifyCode(email string, code string) (bool, error) {
 	ctx := context.Background()
-	key := fmt.Sprintf("email_code:%s", email)
+	key := email
 
 	// 从Redis获取验证码
 	storedCode, err := mail.RedisClient.Get(ctx, key).Result()
@@ -160,7 +160,7 @@ func (mail *Mail) VerifyCode(email string, code string) (bool, error) {
 // 修改验证码状态
 func (mail *Mail) ChangeStatus(addr string) error {
 	ctx := context.Background()
-	key := fmt.Sprintf("email_code:%s", addr)
+	key := addr
 
 	// 删除Redis中的验证码
 	err := mail.RedisClient.Del(ctx, key).Err()

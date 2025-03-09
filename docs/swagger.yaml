@@ -1,51 +1,8 @@
 definitions:
-  model.Event:
+  request.Email:
     properties:
-      description:
+      email:
         type: string
-      end_time:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      start_time:
-        type: string
-      task_id:
-        description: 外键，关联任务
-        type: integer
-    type: object
-  model.Task:
-    properties:
-      description:
-        type: string
-      end_time:
-        type: string
-      events:
-        description: 任务下的多个事件
-        items:
-          $ref: '#/definitions/model.Event'
-        type: array
-      id:
-        type: integer
-      is_completed:
-        description: 检测任务是否完成
-        type: boolean
-      name:
-        type: string
-      start_time:
-        type: string
-      user_id:
-        description: 外键，关联用户
-        type: integer
-    type: object
-  model.TasksData:
-    properties:
-      tasks:
-        description: 一个任务列表
-        items:
-          $ref: '#/definitions/model.Task'
-        type: array
     type: object
   request.ForAlter:
     properties:
@@ -64,6 +21,17 @@ definitions:
       url:
         type: string
     type: object
+  request.PostGoalRequest:
+    properties:
+      date:
+        description: 任务所属日期
+        type: string
+      tasks:
+        description: 该日期下的任务列表
+        items:
+          $ref: '#/definitions/request.TaskRequest'
+        type: array
+    type: object
   request.Question:
     properties:
       cycle:
@@ -76,6 +44,13 @@ definitions:
   request.Slogan:
     properties:
       slogan:
+        type: string
+    type: object
+  request.TaskRequest:
+    properties:
+      details:
+        type: string
+      title:
         type: string
     type: object
   request.UserCancel:
@@ -108,13 +83,44 @@ definitions:
       device_num:
         type: string
     type: object
+  response.Goals:
+    properties:
+      goals:
+        additionalProperties:
+          items:
+            additionalProperties:
+              type: string
+            type: object
+          type: array
+        type: object
+    type: object
   response.Response:
     properties:
+      code:
+        type: integer
       data: {}
-      error:
-        type: string
       message:
         type: string
+    type: object
+  response.Token:
+    properties:
+      token:
+        type: string
+    type: object
+  response.URL:
+    properties:
+      url:
+        type: string
+    type: object
+  response.URLs:
+    properties:
+      urls:
+        items:
+          $ref: '#/definitions/response.URL'
+        type: array
+    type: object
+  response.UpToken:
+    properties:
       token:
         type: string
     type: object
@@ -132,7 +138,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UpToken'
+              type: object
         "500":
           description: Internal Server Error
           schema:
@@ -140,7 +151,7 @@ paths:
       summary: 获取上传的token
       tags:
       - image
-  /goal/DeleteGoal/{task_id}:
+  /goal/DeleteGoal/{goal_id}:
     delete:
       consumes:
       - application/json
@@ -187,7 +198,12 @@ paths:
         "200":
           description: 数据推送完成
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.Goals'
+              type: object
         "400":
           description: 请求参数错误
           schema:
@@ -233,7 +249,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/model.TasksData'
+          $ref: '#/definitions/request.PostGoalRequest'
       produces:
       - application/json
       responses:
@@ -256,7 +272,7 @@ paths:
       summary: 创建目标
       tags:
       - 目标管理
-  /goal/UpdateGoal:
+  /goal/UpdateGoal/{goal_id}:
     put:
       consumes:
       - application/json
@@ -267,7 +283,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/model.TasksData'
+          $ref: '#/definitions/request.PostGoalRequest'
       produces:
       - application/json
       responses:
@@ -307,7 +323,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.URL'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -336,7 +357,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.URLs'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -395,7 +421,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.URL'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -424,7 +455,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.URLs'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -608,7 +644,12 @@ paths:
         "200":
           description: 登录成功
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.Token'
+              type: object
         "400":
           description: 请求参数错误
           schema:
@@ -642,7 +683,12 @@ paths:
         "200":
           description: 游客登录成功
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.Token'
+              type: object
         "500":
           description: 服务器错误
           schema:
@@ -691,22 +737,22 @@ paths:
         name: email
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/request.Email'
       produces:
       - application/json
       responses:
         "200":
           description: 验证码发送成功
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
         "400":
           description: 请求错误
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
         "500":
           description: 服务器错误
           schema:
-            type: string
+            $ref: '#/definitions/response.Response'
       summary: 发送邮箱验证码
       tags:
       - 用户

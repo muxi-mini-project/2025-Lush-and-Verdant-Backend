@@ -1,8 +1,27 @@
 package response
 
 type Response struct {
-	Message string      `json:"message,omitempty"`
-	Error   string      `json:"error,omitempty"`
-	Token   string      `json:"token,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
+type Token struct {
+	Token string `json:"token"`
+}
+
+type UpToken struct {
+	Token string `json:"token"`
+}
+
+type URL struct {
+	URL string `json:"url"`
+}
+
+type URLs struct {
+	URLs []URL `json:"urls"`
+}
+
+type Goals struct {
+	Goals map[string][]map[string]string `json:"goals"`
 }

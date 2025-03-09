@@ -32,7 +32,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UpToken"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "500": {
@@ -44,7 +56,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/goal/DeleteGoal/{task_id}": {
+        "/goal/DeleteGoal/{goal_id}": {
             "delete": {
                 "description": "用户删除指定目标",
                 "consumes": [
@@ -116,7 +128,19 @@ const docTemplate = `{
                     "200": {
                         "description": "数据推送完成",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.Goals"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -189,7 +213,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.TasksData"
+                            "$ref": "#/definitions/request.PostGoalRequest"
                         }
                     }
                 ],
@@ -221,7 +245,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/goal/UpdateGoal": {
+        "/goal/UpdateGoal/{goal_id}": {
             "put": {
                 "description": "用户更新目标信息",
                 "consumes": [
@@ -241,7 +265,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.TasksData"
+                            "$ref": "#/definitions/request.PostGoalRequest"
                         }
                     }
                 ],
@@ -299,7 +323,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.URLs"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -389,7 +425,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.URL"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -433,7 +481,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.URL"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -477,7 +537,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.URLs"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -758,7 +830,19 @@ const docTemplate = `{
                     "200": {
                         "description": "登录成功",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.Token"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -810,7 +894,19 @@ const docTemplate = `{
                     "200": {
                         "description": "游客登录成功",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.Token"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "500": {
@@ -888,7 +984,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/request.Email"
                         }
                     }
                 ],
@@ -896,19 +992,19 @@ const docTemplate = `{
                     "200": {
                         "description": "验证码发送成功",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "请求错误",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
                         "description": "服务器错误",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -916,74 +1012,11 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "model.Event": {
+        "request.Email": {
             "type": "object",
             "properties": {
-                "description": {
+                "email": {
                     "type": "string"
-                },
-                "end_time": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "start_time": {
-                    "type": "string"
-                },
-                "task_id": {
-                    "description": "外键，关联任务",
-                    "type": "integer"
-                }
-            }
-        },
-        "model.Task": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "end_time": {
-                    "type": "string"
-                },
-                "events": {
-                    "description": "任务下的多个事件",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Event"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "is_completed": {
-                    "description": "检测任务是否完成",
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "start_time": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "description": "外键，关联用户",
-                    "type": "integer"
-                }
-            }
-        },
-        "model.TasksData": {
-            "type": "object",
-            "properties": {
-                "tasks": {
-                    "description": "一个任务列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Task"
-                    }
                 }
             }
         },
@@ -1013,6 +1046,22 @@ const docTemplate = `{
                 }
             }
         },
+        "request.PostGoalRequest": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "description": "任务所属日期",
+                    "type": "string"
+                },
+                "tasks": {
+                    "description": "该日期下的任务列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.TaskRequest"
+                    }
+                }
+            }
+        },
         "request.Question": {
             "type": "object",
             "properties": {
@@ -1031,6 +1080,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "slogan": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.TaskRequest": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 }
             }
@@ -1082,16 +1142,65 @@ const docTemplate = `{
                 }
             }
         },
+        "response.Goals": {
+            "type": "object",
+            "properties": {
+                "goals": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "response.Response": {
             "type": "object",
             "properties": {
-                "data": {},
-                "error": {
-                    "type": "string"
+                "code": {
+                    "type": "integer"
                 },
+                "data": {},
                 "message": {
                     "type": "string"
-                },
+                }
+            }
+        },
+        "response.Token": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.URL": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.URLs": {
+            "type": "object",
+            "properties": {
+                "urls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.URL"
+                    }
+                }
+            }
+        },
+        "response.UpToken": {
+            "type": "object",
+            "properties": {
                 "token": {
                     "type": "string"
                 }

@@ -51,7 +51,7 @@ func (isr *ImageServiceImpl) GetToken() (string, error) {
 	// 获取上传凭证
 	upToken, err := uptoken.NewSigner(putPolicy, mac).GetUpToken(context.Background())
 	if err != nil {
-		return upToken, err
+		return "", err
 	}
 	return upToken, nil
 }

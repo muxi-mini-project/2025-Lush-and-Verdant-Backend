@@ -19,11 +19,12 @@ func NewGoalSvc(gc *controller.GoalController) *GoalSvc {
 func (g *GoalSvc) GoalGroup(r *gin.Engine) {
 	r.Use(middleware.Cors())
 	Goal := r.Group("/goal")
+	//Goal.Use(middleware.NewJwtClient(&config.JwtConfig{}).AuthMiddleware()) // 添加JWT中间件
 	{
 		Goal.GET("/GetGoal", g.gc.GetGoal)
 		Goal.POST("/MakeGoal", g.gc.PostGoal)
-		Goal.PUT("/UpdateGoal", g.gc.UpdateGoal)
+		Goal.PUT("/UpdateGoal/:goal_id", g.gc.UpdateGoal)
 		Goal.GET("/HistoricalGoal", g.gc.HistoricalGoal)
-		Goal.DELETE("/DeleteGoal/:task_id", g.gc.DeleteGoal)
+		Goal.DELETE("/DeleteGoal/:goal_id", g.gc.DeleteGoal)
 	}
 }

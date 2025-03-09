@@ -24,16 +24,16 @@ func NewImageController(isr service.ImageService) *ImageController {
 // @Tags image
 // @Accept json
 // @Produce json
-// @Success 200 {object} response.Response
+// @Success 200 {object} response.Response{data=response.UpToken}
 // @Failure 500 {object} response.Response
 // @Router /get_token [get]
 func (ic *ImageController) GetUpToken(c *gin.Context) {
 	uptoken, err := ic.isr.GetToken()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "用户未登录"})
 		return
 	}
-	c.JSON(http.StatusOK, response.Response{Message: "获取成功", Token: uptoken})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取成功", Data: uptoken})
 }
 
 // GetUserImage 获取用户图片
@@ -43,7 +43,7 @@ func (ic *ImageController) GetUpToken(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "用户ID"
-// @Success 200 {object} response.Response
+// @Success 200 {object} response.Response{data=response.URL}
 // @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Router /image/user/get/{id} [get]
@@ -51,7 +51,7 @@ func (ic *ImageController) GetUserImage(c *gin.Context) {
 	idstr := c.Param("id")
 	id, err := strconv.Atoi(idstr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: "id传输错误"})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "id传输错误"})
 		return
 	}
 
@@ -59,7 +59,7 @@ func (ic *ImageController) GetUserImage(c *gin.Context) {
 	user.ID = uint(id)
 	url, err := ic.isr.GetUserImage(&user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取头像失败"})
 		return
 	}
 	c.JSON(http.StatusOK, response.Response{Data: url})
@@ -72,7 +72,7 @@ func (ic *ImageController) GetUserImage(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "用户ID"
-// @Success 200 {object} response.Response
+// @Success 200 {object} response.Response{data=response.URLs}
 // @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Router /image/user/history/{id} [get]
@@ -81,7 +81,7 @@ func (ic *ImageController) GetUserAllImage(c *gin.Context) {
 	idstr := c.Param("id")
 	id, err := strconv.Atoi(idstr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: "id传输错误"})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "id传输错误"})
 		return
 	}
 	// 得到url
@@ -89,10 +89,10 @@ func (ic *ImageController) GetUserAllImage(c *gin.Context) {
 	user.ID = uint(id)
 	urls, err := ic.isr.GetUserAllImage(&user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取历史头像失败"})
 		return
 	}
-	c.JSON(http.StatusOK, response.Response{Data: urls})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Data: urls})
 }
 
 // UpdateUserImage 更新用户头像
@@ -109,7 +109,7 @@ func (ic *ImageController) GetUserAllImage(c *gin.Context) {
 func (ic *ImageController) UpdateUserImage(c *gin.Context) {
 	var imageRequest request.Image
 	if err := c.ShouldBindJSON(&imageRequest); err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
 		return
 	}
 	var image model.UserImage
@@ -117,10 +117,10 @@ func (ic *ImageController) UpdateUserImage(c *gin.Context) {
 	image.Url = imageRequest.Url
 	err := ic.isr.UpdateUserImage(&image)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "头像上传失败"})
 		return
 	}
-	c.JSON(http.StatusOK, response.Response{Message: "更新成功"})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "更新成功"})
 }
 
 // GetGroupImage 获取群组图片
@@ -130,7 +130,7 @@ func (ic *ImageController) UpdateUserImage(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "群组ID"
-// @Success 200 {object} response.Response
+// @Success 200 {object} response.Response{data=response.URL}
 // @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Router /image/group/{id} [get]
@@ -138,7 +138,7 @@ func (ic *ImageController) GetGroupImage(c *gin.Context) {
 	idstr := c.Param("id")
 	id, err := strconv.Atoi(idstr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: "id传输错误"})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "id传输错误"})
 		return
 	}
 
@@ -146,10 +146,10 @@ func (ic *ImageController) GetGroupImage(c *gin.Context) {
 	group.ID = uint(id)
 	url, err := ic.isr.GetGroupImage(&group)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取群组头像失败"})
 		return
 	}
-	c.JSON(http.StatusOK, response.Response{Data: url})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Data: url})
 }
 
 // GetGroupAllImage 获取所有群组图片
@@ -159,7 +159,7 @@ func (ic *ImageController) GetGroupImage(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "群组ID"
-// @Success 200 {object} response.Response
+// @Success 200 {object} response.Response{data=response.URLs}
 // @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Router /image/group/history/{id} [get]
@@ -168,7 +168,7 @@ func (ic *ImageController) GetGroupAllImage(c *gin.Context) {
 	idstr := c.Param("id")
 	id, err := strconv.Atoi(idstr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: "id传输错误"})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "id传输错误"})
 		return
 	}
 	// 得到url
@@ -176,11 +176,11 @@ func (ic *ImageController) GetGroupAllImage(c *gin.Context) {
 	group.ID = uint(id)
 	urls, err := ic.isr.GetGroupAllImage(&group)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取群组历史头像失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Response{Data: urls})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Data: urls})
 }
 
 // UpdateGroupImage 更新群组头像
@@ -197,7 +197,7 @@ func (ic *ImageController) GetGroupAllImage(c *gin.Context) {
 func (ic *ImageController) UpdateGroupImage(c *gin.Context) {
 	var imageRequest request.Image
 	if err := c.ShouldBindJSON(&imageRequest); err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
 		return
 	}
 
@@ -209,7 +209,7 @@ func (ic *ImageController) UpdateGroupImage(c *gin.Context) {
 	// todo 检测权限
 	err := ic.isr.UpdateGroupImage(&image)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "更新群组头像失败"})
 		return
 	}
 	c.JSON(http.StatusOK, response.Response{Message: "更新成功"})

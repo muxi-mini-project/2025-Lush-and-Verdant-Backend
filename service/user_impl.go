@@ -39,7 +39,7 @@ func (usr *UserServiceImpl) UserRegister(c *gin.Context) error {
 	// 获取前端的消息
 	var userRegister request.UserRegister
 	if err := c.ShouldBindJSON(&userRegister); err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
 		return err
 	}
 	// 先查询用户是否注册
@@ -53,27 +53,27 @@ func (usr *UserServiceImpl) UserRegister(c *gin.Context) error {
 			// 更新用户
 			err := usr.Dao.VisitorToUser(userRegister.Device_Num, user)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: "游客转正失败"})
+				c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "游客转正失败"})
 				return err
 			}
 
 			log.Printf("register user %v success", user.Email)
-			c.JSON(http.StatusOK, response.Response{Message: "游客转正成功"})
+			c.JSON(http.StatusOK, response.Response{Code: 200, Message: "游客转正成功"})
 			return nil
 		} else {
-			c.JSON(http.StatusTooManyRequests, response.Response{Error: "用户已注册"})
+			c.JSON(http.StatusTooManyRequests, response.Response{Code: 429, Message: "用户已注册"})
 			return fmt.Errorf("用户已注册")
 		}
 	}
 
 	storedCode, err := usr.EmailCodeDAO.GetEmailCode(userRegister.Email)
 	if err != nil {
-		c.JSON(http.StatusNotFound, response.Response{Error: "验证码不存在或已过期"})
+		c.JSON(http.StatusNotFound, response.Response{Code: 404, Message: "验证码不存在或已过期"})
 		return fmt.Errorf("验证码不存在或已过期")
 	}
 
 	if storedCode != userRegister.Code {
-		c.JSON(http.StatusBadRequest, response.Response{Error: "验证码错误"})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "验证码错误"})
 		return fmt.Errorf("验证码错误")
 	}
 
@@ -84,7 +84,7 @@ func (usr *UserServiceImpl) UserRegister(c *gin.Context) error {
 		DeviceNum: userRegister.Device_Num,
 	}
 	if err := usr.Dao.CreateUser(&newUser); err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "用户注册失败"})
 		return err
 	}
 
@@ -93,7 +93,7 @@ func (usr *UserServiceImpl) UserRegister(c *gin.Context) error {
 	// 删除Redis中的验证码
 	usr.EmailCodeDAO.DeleteEmailCode(newUser.Email)
 
-	c.JSON(http.StatusOK, response.Response{Message: "用户注册成功"})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "用户注册成功"})
 	return nil
 }
 
@@ -102,7 +102,7 @@ func (usr *UserServiceImpl) UserLogin(c *gin.Context) error {
 	// 接受前端发送的消息
 	var userLogin request.UserLogin
 	if err := c.ShouldBindJSON(&userLogin); err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
 		return err
 	}
 
@@ -112,17 +112,17 @@ func (usr *UserServiceImpl) UserLogin(c *gin.Context) error {
 			// 生成token
 			token, err := usr.jwt.GenerateToken(int(user.ID))
 			if err != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: "生成token失败"})
+				c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "生成token失败"})
 				return err
 			}
-			c.JSON(http.StatusOK, response.Response{Message: "登录成功", Token: token})
+			c.JSON(http.StatusOK, response.Response{Code: 200, Message: "登录成功", Data: token})
 			return nil
 		} else {
-			c.JSON(http.StatusConflict, response.Response{Error: "密码错误"})
+			c.JSON(http.StatusConflict, response.Response{Code: 409, Message: "密码错误"})
 			return fmt.Errorf("%s 密码错误", user.Email)
 		}
 	} else { // 没有该用户
-		c.JSON(http.StatusBadRequest, response.Response{Error: "用户未注册"})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "用户未注册"})
 		return fmt.Errorf("%s 用户未注册", userLogin.Email)
 	}
 
@@ -133,7 +133,7 @@ func (usr *UserServiceImpl) VisitorLogin(c *gin.Context) error {
 	// 接受前端的消息
 	var visitor request.Visitor
 	if err := c.ShouldBindJSON(&visitor); err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
 		return err
 	}
 	// 查询这个机型是否登陆过
@@ -149,15 +149,15 @@ func (usr *UserServiceImpl) VisitorLogin(c *gin.Context) error {
 		seconds := int(timeSub.Seconds()) % 60
 		duration := fmt.Sprintf("%02d天-%02d时:%02d分:%02d秒", days, hours, minutes, seconds)
 		if now.After(monthlate) { // 超过一个月了
-			c.JSON(http.StatusConflict, response.Response{Error: "游客登录时间过长,禁止登录"})
+			c.JSON(http.StatusConflict, response.Response{Code: 409, Message: "游客登录时间过长,禁止登录"})
 			return fmt.Errorf("%s 游客登录时间过长,禁止登录", user.DeviceNum)
 		} else { // 没超过一个月
 			token, err := usr.jwt.GenerateToken(int(user.ID))
 			if err != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+				c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "token解析失败"})
 				return err
 			}
-			c.JSON(http.StatusOK, response.Response{Message: "游客登录成功,剩余时间为" + duration, Token: token})
+			c.JSON(http.StatusOK, response.Response{Code: 200, Message: "游客登录成功,剩余时间为" + duration, Data: token})
 			return nil
 		}
 	} else { // 说明是新用户
@@ -165,23 +165,23 @@ func (usr *UserServiceImpl) VisitorLogin(c *gin.Context) error {
 		// 创建游客
 		err := usr.Dao.CreateUser(user)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+			c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "游客创建失败"})
 			return err
 		}
 		// 给这个游客姓名
 		username := usr.priCfg.Name + strconv.Itoa(int(user.ID))
 		err = usr.Dao.UpdateUserName(user.DeviceNum, username)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+			c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "游客创建失败"})
 			return err
 		}
 		// 传送token
 		token, err := usr.jwt.GenerateToken(int(user.ID))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+			c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "token解析失败"})
 			return err
 		}
-		c.JSON(http.StatusOK, response.Response{Message: "游客注册成功，剩余时间30天", Token: token})
+		c.JSON(http.StatusOK, response.Response{Code: 200, Message: "游客注册成功，剩余时间30天", Data: token})
 		return nil
 	}
 }
@@ -191,23 +191,23 @@ func (usr *UserServiceImpl) ForForAlt(c *gin.Context) error {
 	// 接受前端消息
 	var foralt request.ForAlter
 	if err := c.ShouldBindJSON(&foralt); err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
 		return err
 	}
 
 	storedCode, err := usr.EmailCodeDAO.GetEmailCode(foralt.Email)
 	if err != nil {
-		c.JSON(http.StatusNotFound, response.Response{Error: "验证码不存在或已过期"})
+		c.JSON(http.StatusNotFound, response.Response{Code: 404, Message: "验证码不存在或已过期"})
 		return fmt.Errorf("验证码不存在或已过期")
 	}
 
 	if storedCode != foralt.Code {
-		c.JSON(http.StatusBadRequest, response.Response{Error: "验证码错误"})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "验证码错误"})
 		return fmt.Errorf("验证码错误")
 	}
 
 	if err := usr.Dao.UpdatePassword(foralt.Email, foralt.Password); err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Error: "修改密码失败"})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "修改密码失败"})
 		return err
 	}
 
@@ -216,7 +216,7 @@ func (usr *UserServiceImpl) ForForAlt(c *gin.Context) error {
 	// 删除Redis中的验证码
 	usr.EmailCodeDAO.DeleteEmailCode(foralt.Email)
 
-	c.JSON(http.StatusOK, response.Response{Message: "修改密码成功"})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "修改密码成功"})
 	return nil
 }
 
@@ -225,7 +225,7 @@ func (usr *UserServiceImpl) Cancel(c *gin.Context) error {
 	// 接受前端消息
 	var cancel request.UserCancel
 	if err := c.ShouldBindJSON(&cancel); err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
 		return err
 	}
 	// 查询用户
@@ -233,13 +233,13 @@ func (usr *UserServiceImpl) Cancel(c *gin.Context) error {
 	if ok { // 找到了,直接硬删除
 		err := usr.Dao.DeleteUser(cancel.Email, user)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
+			c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "用户注销失败"})
 			return err
 		}
-		c.JSON(http.StatusOK, response.Response{Message: "用户注销成功"})
+		c.JSON(http.StatusOK, response.Response{Code: 200, Message: "用户注销成功"})
 		return nil
 	} else {
-		c.JSON(http.StatusNotFound, response.Response{Error: "用户没注册，还妄想注销账户"})
+		c.JSON(http.StatusNotFound, response.Response{Code: 404, Message: "用户没注册，还妄想注销账户"})
 		return fmt.Errorf("%s 用户没注册，还妄想注销账户", cancel.Email)
 	}
 }

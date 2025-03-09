@@ -11,10 +11,10 @@ import (
 // @Tags 用户
 // @Accept json
 // @Produce json
-// @Param email body string true "用户邮箱"
-// @Success 200 {string} string "验证码发送成功"
-// @Failure 400 {string} string "请求错误"
-// @Failure 500 {string} string "服务器错误"
+// @Param email body request.Email true "用户邮箱"
+// @Success 200 {object} response.Response "验证码发送成功"
+// @Failure 400 {object} response.Response "请求错误"
+// @Failure 500 {object} response.Response "服务器错误"
 // @Router /user/send_email [post]
 func (uc *UserController) SendEmail(c *gin.Context) {
 	err := uc.usr.SendEmail(c)

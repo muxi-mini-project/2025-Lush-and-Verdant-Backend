@@ -1,15 +1,16 @@
 package service
 
 import (
+	"2025-Lush-and-Verdant-Backend/api/request"
 	"2025-Lush-and-Verdant-Backend/dao"
 	"2025-Lush-and-Verdant-Backend/model"
 )
 
 type GoalService interface {
-	PostGoal(model.TasksData) error
-	UpdateGoal(uint, model.TasksData) error
-	HistoricalGoal(uint) ([]*model.Task, error)
-	DeleteGoal(uint, string) error
+	PostGoal(userID uint, req request.PostGoalRequest) error
+	UpdateGoal(userID uint, goalID uint, req request.PostGoalRequest) error
+	HistoricalGoal(userID uint) (map[string][]model.Task, error)
+	DeleteGoal(userID uint, goalID uint) error
 }
 
 type GoalServiceImpl struct {
@@ -22,102 +23,78 @@ func NewGoalServiceImpl(goalDao dao.GoalDAO) *GoalServiceImpl {
 	}
 }
 
-func (gsr *GoalServiceImpl) PostGoal(message model.TasksData) error {
-	for _, task := range message.Tasks {
-		// 创建任务并关联到userID
-		taskData := model.Task{
-			Name:        task.Name,
-			Description: task.Description,
-			StartTime:   task.StartTime,
-			EndTime:     task.EndTime,
-			UserID:      task.UserID, // 关联任务与用户
-			IsCompleted: false,
-		}
+// PostGoal 创建新的目标及任务
+func (gsr *GoalServiceImpl) PostGoal(userID uint, req request.PostGoalRequest) error {
+	newGoal := model.Goal{
+		UserID: userID,
+		Date:   req.Date,
+	}
+	if err := gsr.GoalDao.CreateGoal(&newGoal); err != nil {
+		return err
+	}
 
-		err := gsr.GoalDao.CreatTask(&taskData)
-		if err != nil {
+	// 批量创建任务
+	for _, task := range req.Tasks {
+		newTask := model.Task{
+			GoalID:  newGoal.ID,
+			Title:   task.Title,
+			Details: task.Details,
+		}
+		if err := gsr.GoalDao.CreateTask(&newTask); err != nil {
 			return err
 		}
-
-		for _, event := range task.Events {
-			eventData := model.Event{
-				Name:        event.Name,
-				Description: event.Description,
-				StartTime:   event.StartTime,
-				EndTime:     event.EndTime,
-				TaskID:      event.TaskID, // 关联任务
-			}
-			err := gsr.GoalDao.CreatEvent(&eventData)
-			if err != nil {
-				return err
-			}
-		}
 	}
+
 	return nil
 }
 
-func (gsr *GoalServiceImpl) UpdateGoal(userID uint, message model.TasksData) error {
-	for _, task := range message.Tasks {
-		existingTask, err := gsr.GoalDao.GetTask(task.ID, userID)
-		if err != nil {
-			return err
-		}
-		existingTask.Name = task.Name
-		existingTask.Description = task.Description
-		existingTask.StartTime = task.StartTime
-		existingTask.EndTime = task.EndTime
-		existingTask.IsCompleted = task.IsCompleted
-		err = gsr.GoalDao.UpdateTask(existingTask)
-		if err != nil {
-			return err
-		}
-		for _, event := range task.Events {
-			existingEvent, err := gsr.GoalDao.GetEvent(event.ID, event.TaskID)
-			if err != nil {
-				return err
-			}
-			existingEvent.Name = event.Name
-			existingEvent.Description = event.Description
-			existingEvent.StartTime = event.StartTime
-			existingEvent.EndTime = event.EndTime
+// UpdateGoal 更新已有目标及任务
+func (gsr *GoalServiceImpl) UpdateGoal(userID uint, goalID uint, req request.PostGoalRequest) error {
+	goal, err := gsr.GoalDao.GetGoal(goalID, userID)
+	if err != nil {
+		return err
+	}
 
-			err = gsr.GoalDao.UpdateEvent(existingEvent)
-			if err != nil {
-				return err
-			}
+	goal.Date = req.Date
+	if err := gsr.GoalDao.CreateGoal(goal); err != nil {
+		return err
+	}
+
+	// 先删除原有任务，再添加新任务
+	if err := gsr.GoalDao.DeleteTasks(goal.ID); err != nil {
+		return err
+	}
+
+	for _, task := range req.Tasks {
+		newTask := model.Task{
+			GoalID:  goal.ID,
+			Title:   task.Title,
+			Details: task.Details,
+		}
+		if err := gsr.GoalDao.CreateTask(&newTask); err != nil {
+			return err
 		}
 	}
+
 	return nil
 }
 
-func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) ([]*model.Task, error) {
-	tasks, err := gsr.GoalDao.GetTasks(userID)
+// HistoricalGoal 获取用户所有历史目标及任务
+func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) (map[string][]model.Task, error) {
+	goals, err := gsr.GoalDao.GetGoals(userID)
 	if err != nil {
 		return nil, err
 	}
-	for i := range tasks {
-		events, err := gsr.GoalDao.GetEvents(tasks[i].ID)
-		if err != nil {
-			return nil, err
-		}
-		tasks[i].Events = events
+
+	goalMap := make(map[string][]model.Task)
+	for _, goal := range goals {
+		goalMap[goal.Date] = goal.Tasks
 	}
 
-	return tasks, nil
+	return goalMap, nil
 }
 
-func (gsr *GoalServiceImpl) DeleteGoal(userID uint, taskID string) error {
-	task, err := gsr.GoalDao.GetTaskS(taskID, userID)
-	if err != nil {
-		return err
-	}
-	err = gsr.GoalDao.DeleteEvents(task.ID)
-	if err != nil {
-		return err
-	}
-	err = gsr.GoalDao.DeleteTask(task)
-	if err != nil {
-		return err
-	}
-	return nil
+// DeleteGoal 删除目标及任务
+func (gsr *GoalServiceImpl) DeleteGoal(userID uint, goalID uint) error {
+	return gsr.GoalDao.DeleteGoal(goalID, userID)
 }
