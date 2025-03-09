@@ -7,19 +7,21 @@ import (
 )
 
 type GoalSvc struct {
-	gc *controller.GoalController
+	gc  *controller.GoalController
+	jwt *middleware.JwtClient
 }
 
-func NewGoalSvc(gc *controller.GoalController) *GoalSvc {
+func NewGoalSvc(gc *controller.GoalController, jwt *middleware.JwtClient) *GoalSvc {
 	return &GoalSvc{
-		gc: gc,
+		gc:  gc,
+		jwt: jwt,
 	}
 }
 
 func (g *GoalSvc) GoalGroup(r *gin.Engine) {
 	r.Use(middleware.Cors())
-	Goal := r.Group("/goal")
-	//Goal.Use(middleware.NewJwtClient(&config.JwtConfig{}).AuthMiddleware()) // 添加JWT中间件
+
+	Goal := r.Group("/goal").Use(g.jwt.AuthMiddleware())
 	{
 		Goal.GET("/GetGoal", g.gc.GetGoal)
 		Goal.POST("/MakeGoal", g.gc.PostGoal)

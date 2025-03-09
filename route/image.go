@@ -7,17 +7,20 @@ import (
 )
 
 type ImageSvc struct {
-	ic *controller.ImageController
+	ic  *controller.ImageController
+	jwt *middleware.JwtClient
 }
 
-func NewImageSvc(ic *controller.ImageController) *ImageSvc {
+func NewImageSvc(ic *controller.ImageController, jwt *middleware.JwtClient) *ImageSvc {
 	return &ImageSvc{
-		ic: ic,
+		ic:  ic,
+		jwt: jwt,
 	}
 }
 
 func (i *ImageSvc) ImageGroup(r *gin.Engine) {
 	r.Use(middleware.Cors())
+	r.Use(i.jwt.AuthMiddleware())
 	r.GET("/get_token", i.ic.GetUpToken)
 	userImage := r.Group("/image/user")
 	{
@@ -25,6 +28,7 @@ func (i *ImageSvc) ImageGroup(r *gin.Engine) {
 		userImage.GET("/history/:id", i.ic.GetUserAllImage)
 		userImage.PUT("/update", i.ic.UpdateUserImage)
 	}
+
 	group := r.Group("/image/group")
 	{
 		group.GET("/:id", i.ic.GetGroupImage)
