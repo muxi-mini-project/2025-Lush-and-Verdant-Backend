@@ -75,7 +75,14 @@ func (mc *GoalController) PostGoal(c *gin.Context) {
 		return
 	}
 
-	err := mc.gsr.PostGoal(userID.(uint), message)
+	userIDInt, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "类型转换失败"})
+		return
+	}
+	userIDUint := uint(userIDInt)
+
+	err := mc.gsr.PostGoal(userIDUint, message)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "保存失败"})
 		return
@@ -116,7 +123,14 @@ func (mc *GoalController) UpdateGoal(c *gin.Context) {
 		return
 	}
 
-	err = mc.gsr.UpdateGoal(userID.(uint), uint(goalID), message)
+	userIDInt, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "类型转换失败"})
+		return
+	}
+	userIDUint := uint(userIDInt)
+
+	err = mc.gsr.UpdateGoal(userIDUint, uint(goalID), message)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "目标更新失败"})
 		return
@@ -142,7 +156,14 @@ func (mc *GoalController) HistoricalGoal(c *gin.Context) {
 		return
 	}
 
-	goals, err := mc.gsr.HistoricalGoal(userID.(uint))
+	userIDInt, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "类型转换失败"})
+		return
+	}
+	userIDUint := uint(userIDInt)
+
+	goals, err := mc.gsr.HistoricalGoal(userIDUint)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取历史目标失败"})
 		return
@@ -177,7 +198,14 @@ func (mc *GoalController) DeleteGoal(c *gin.Context) {
 		return
 	}
 
-	err = mc.gsr.DeleteGoal(userID.(uint), uint(goalID))
+	userIDInt, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "类型转换失败"})
+		return
+	}
+	userIDUint := uint(userIDInt)
+
+	err = mc.gsr.DeleteGoal(userIDUint, uint(goalID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "目标删除失败"})
 		return
