@@ -16,6 +16,8 @@ type UserDAO interface {
 	CreateUserEmail(email *model.Email) error
 	UpdateUser(user *model.User) error
 	UpdateUserName(device string, username string) error
+	UpdateUserNameById(id uint, name string) error
+	UpdateUserEmailById(id uint, email string) error
 	UpdatePassword(email string, password string) error
 	UpdateUserEmail(email *model.Email) error
 	DeleteUser(email string, user *model.User) error
@@ -141,6 +143,24 @@ func (dao *UserDAOImpl) CreateUserEmail(email *model.Email) error {
 	result := dao.db.Create(&email)
 	if result.Error != nil {
 		return fmt.Errorf("更新验证码失败%s", result.Error.Error())
+	}
+	return nil
+}
+
+// 通过用户id修改用户名
+func (dao *UserDAOImpl) UpdateUserNameById(id uint, name string) error {
+	result := dao.db.Model(&model.User{}).Where("id = ?", id).Update("username", name)
+	if result.Error != nil {
+		return fmt.Errorf("修改失败")
+	}
+	return nil
+}
+
+// 通过用户id修改邮箱
+func (dao *UserDAOImpl) UpdateUserEmailById(id uint, email string) error {
+	result := dao.db.Model(&model.User{}).Where("id = ?", email).Update("email", email)
+	if result.Error != nil {
+		return fmt.Errorf("修改邮箱失败")
 	}
 	return nil
 }

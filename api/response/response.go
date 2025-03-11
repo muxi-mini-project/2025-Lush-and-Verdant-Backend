@@ -25,3 +25,9 @@ type URLs struct {
 type Goals struct {
 	Goals map[string][]map[string]string `json:"goals"`
 }
+
+type User struct {
+	ID       string `json:"id"`
+	UserName string `json:"username"`
+	Email    string `json:"email"`
+}

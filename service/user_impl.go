@@ -115,7 +115,7 @@ func (usr *UserServiceImpl) UserLogin(c *gin.Context) error {
 				c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "生成token失败"})
 				return err
 			}
-			c.JSON(http.StatusOK, response.Response{Code: 200, Message: fmt.Sprintf("%d", user.ID), Data: token})
+			c.JSON(http.StatusOK, response.Response{Code: 200, Message: fmt.Sprintf("%d", int(user.ID)), Data: token})
 			return nil
 		} else {
 			c.JSON(http.StatusConflict, response.Response{Code: 409, Message: "密码错误"})
@@ -242,4 +242,51 @@ func (usr *UserServiceImpl) Cancel(c *gin.Context) error {
 		c.JSON(http.StatusNotFound, response.Response{Code: 404, Message: "用户没注册，还妄想注销账户"})
 		return fmt.Errorf("%s 用户没注册，还妄想注销账户", cancel.Email)
 	}
+}
+
+// 通过id获取用户的信息
+func (usr *UserServiceImpl) GetUserInfoById(idStr string) (*response.User, error) {
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return nil, fmt.Errorf("id传输错误")
+	}
+	user, err := usr.Dao.GetUserById(uint(id))
+	if err != nil {
+		return nil, err
+	}
+	var userRes response.User
+	userRes.UserName = user.Username
+	userRes.Email = user.Email
+	idRes := strconv.Itoa(int(user.ID))
+	userRes.ID = idRes
+	return &userRes, nil
+}
+
+func (usr *UserServiceImpl) UpdateUserInfo(user *request.UserUpdate) error {
+	id, err := strconv.Atoi(user.Id)
+	if err != nil {
+		return fmt.Errorf("用户id出错")
+	}
+	if user.Username == "" { //用户只修改email
+		err := usr.Dao.UpdateUserEmailById(uint(id), user.Email)
+		if err != nil {
+			return err
+		}
+
+	} else if user.Email == "" {
+		err := usr.Dao.UpdateUserNameById(uint(id), user.Username)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := usr.Dao.UpdateUserEmailById(uint(id), user.Email)
+		if err != nil {
+			return err
+		}
+		err = usr.Dao.UpdateUserNameById(uint(id), user.Username)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

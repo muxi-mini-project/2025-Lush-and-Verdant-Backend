@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"2025-Lush-and-Verdant-Backend/api/request"
+	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/service"
 	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 )
 
 type UserController struct {
@@ -112,4 +115,48 @@ func (uc *UserController) Cancel(c *gin.Context) {
 		log.Println(err)
 		return
 	}
+}
+
+// GetUserInfoById 获取用户个人信息
+// @Summary 获取用户个人信息
+// @Description 允许用户获取个人信息
+// @Tags 用户
+// @Produce json
+// @Success 200 {object} response.Response{data=response.User} "获取个人信息成功"
+// @Failure 400 {object} response.Response "请求参数错误"
+// @Failure 401 {object} response.Response "认证失败"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /user/info/{id} [GET]
+func (uc *UserController) GetUserInfoById(c *gin.Context) {
+	id := c.Param("id")
+	user, err := uc.usr.GetUserInfoById(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "获取失败"})
+		return
+	}
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取用户信息成功", Data: user})
+}
+
+// UpdateUserInfo 更新用户个人信息（姓名和邮箱）
+// @Summary 更新用户个人信息
+// @Description 允许用户更新个人信息
+// @Tags 用户
+// @Produce json
+// @Success 200 {object} response.Response "更新个人信息成功"
+// @Failure 400 {object} response.Response "请求参数错误"
+// @Failure 401 {object} response.Response "认证失败"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /user/update [POST]
+func (uc *UserController) UpdateUserInfo(c *gin.Context) {
+	var userUpdate request.UserUpdate
+	if err := c.ShouldBindJSON(&userUpdate); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "参数传输失败"})
+		return
+	}
+	err := uc.usr.UpdateUserInfo(&userUpdate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "修改成功"})
 }

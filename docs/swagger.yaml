@@ -124,6 +124,15 @@ definitions:
       token:
         type: string
     type: object
+  response.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      username:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -626,6 +635,36 @@ paths:
       summary: 忘记密码/修改密码
       tags:
       - 用户
+  /user/info/{id}:
+    get:
+      description: 允许用户获取个人信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取个人信息成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.User'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取用户个人信息
+      tags:
+      - 用户
   /user/login:
     post:
       consumes:
@@ -754,6 +793,31 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: 发送邮箱验证码
+      tags:
+      - 用户
+  /user/update:
+    post:
+      description: 允许用户更新个人信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新个人信息成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新用户个人信息
       tags:
       - 用户
 swagger: "2.0"

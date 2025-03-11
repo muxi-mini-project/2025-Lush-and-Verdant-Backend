@@ -8,6 +8,12 @@ type UserRegister struct {
 	Device_Num string `json:"device_num"`
 }
 
+type UserUpdate struct {
+	Id       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
 type UserLogin struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`

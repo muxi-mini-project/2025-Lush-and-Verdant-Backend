@@ -1,6 +1,8 @@
 package service
 
 import (
+	"2025-Lush-and-Verdant-Backend/api/request"
+	"2025-Lush-and-Verdant-Backend/api/response"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,4 +14,6 @@ type UserService interface {
 	ForForAlt(*gin.Context) error
 	Cancel(*gin.Context) error
 	SendEmail(*gin.Context) error
+	GetUserInfoById(idStr string) (*response.User, error)
+	UpdateUserInfo(user *request.UserUpdate) error
 }
