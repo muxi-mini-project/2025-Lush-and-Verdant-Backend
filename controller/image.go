@@ -113,9 +113,14 @@ func (ic *ImageController) UpdateUserImage(c *gin.Context) {
 		return
 	}
 	var image model.UserImage
-	image.UserID = uint(imageRequest.Id)
+	id, err := strconv.Atoi(imageRequest.Id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
+		return
+	}
+	image.UserID = uint(id)
 	image.Url = imageRequest.Url
-	err := ic.isr.UpdateUserImage(&image)
+	err = ic.isr.UpdateUserImage(&image)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "头像上传失败"})
 		return
@@ -202,12 +207,17 @@ func (ic *ImageController) UpdateGroupImage(c *gin.Context) {
 	}
 
 	var image model.GroupImage
-	image.GroupID = uint(imageRequest.Id)
+	id, err := strconv.Atoi(imageRequest.Id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
+		return
+	}
+	image.GroupID = uint(id)
 	image.Url = imageRequest.Url
 	// 查询group，获得group对象
 
 	// todo 检测权限
-	err := ic.isr.UpdateGroupImage(&image)
+	err = ic.isr.UpdateGroupImage(&image)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "更新群组头像失败"})
 		return

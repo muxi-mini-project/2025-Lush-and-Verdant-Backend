@@ -48,7 +48,7 @@ type Question struct {
 }
 
 type Image struct {
-	Id  int    `json:"id"` //是userId或者groupId
+	Id  string `json:"id"` //是userId或者groupId
 	Url string `json:"url"`
 }
 
