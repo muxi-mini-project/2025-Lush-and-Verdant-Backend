@@ -158,7 +158,8 @@ func (dao *UserDAOImpl) UpdateUserNameById(id uint, name string) error {
 
 // 通过用户id修改邮箱
 func (dao *UserDAOImpl) UpdateUserEmailById(id uint, email string) error {
-	result := dao.db.Model(&model.User{}).Where("id = ?", email).Update("email", email)
+
+	result := dao.db.Model(&model.User{}).Where("id = ?", id).Update("email", email)
 	if result.Error != nil {
 		return fmt.Errorf("修改邮箱失败")
 	}
