@@ -9,6 +9,7 @@ import (
 type SloganService interface {
 	GetSlogan(string) (string, error)
 	ChangeSlogan(uint, request.Slogan) error
+	SearchSlogan(userID uint) (string, error)
 }
 
 type SloganServiceImpl struct {
@@ -67,4 +68,13 @@ func (ssr *SloganServiceImpl) ChangeSlogan(id uint, newSlogan request.Slogan) er
 	}
 
 	return nil
+}
+
+func (ssr *SloganServiceImpl) SearchSlogan(userID uint) (string, error) {
+	slogan, err := ssr.SloganDao.SearchSlogan(userID)
+	if err != nil {
+		return "", fmt.Errorf("未找到相关激励语%s", err.Error())
+	}
+
+	return slogan.Slogan, nil
 }

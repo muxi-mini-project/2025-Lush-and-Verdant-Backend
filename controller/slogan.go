@@ -84,3 +84,37 @@ func (uc *SloganController) ChangeSlogan(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "激励语更新成功", Data: newSlogan})
 }
+
+// SearchSlogan 获取激励语
+// @Summary 获取激励语
+// @Description 用户获取激励语
+// @Tags 标语
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response{data=response.PostGoalResponse} "获取成功"
+// @Failure 400 {object} response.Response "解析失败"
+// @Failure 401 {object} response.Response "用户未授权"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /slogan/SearchSlogan [get]
+func (uc *SloganController) SearchSlogan(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, response.Response{Code: 401, Message: "用户未授权"})
+		return
+	}
+
+	userIDInt, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "类型转换失败"})
+		return
+	}
+	userIDUint := uint(userIDInt)
+
+	slogan, err := uc.ssr.SearchSlogan(userIDUint)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "获取激励语失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取激励语成功", Data: slogan})
+}

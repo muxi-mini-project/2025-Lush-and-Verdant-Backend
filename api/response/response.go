@@ -34,8 +34,8 @@ type User struct {
 }
 
 type PostGoalResponse struct {
-	GoalID  uint   `json:"goal_id"`
-	TaskIDs []uint `json:"task_ids"`
+	GoalID  string   `json:"goal_id"`
+	TaskIDs []string `json:"task_ids"`
 }
 
 type SloganResponse struct {
@@ -43,7 +43,7 @@ type SloganResponse struct {
 }
 
 type TaskWithChecks struct {
-	TaskID    uint   `json:"task_id"`
+	TaskID    string `json:"task_id"`
 	Title     string `json:"title"`
 	Details   string `json:"details"`
 	Completed bool   `json:"completed"`

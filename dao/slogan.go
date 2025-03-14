@@ -9,6 +9,7 @@ import (
 type SloganDAO interface {
 	GetAllSlogan() ([]model.Slogan, error)
 	GetOneSlogan() (*model.Slogan, error)
+	SearchSlogan(userID uint) (*model.Slogan, error)
 }
 
 type SloganDAOImpl struct {
@@ -34,6 +35,13 @@ func (dao *SloganDAOImpl) GetAllSlogan() ([]model.Slogan, error) {
 func (dao *SloganDAOImpl) GetOneSlogan() (*model.Slogan, error) {
 	var slogan model.Slogan
 	dao.db.Table("slogans").Order("RAND()").First(&slogan)
+	return &slogan, nil
+}
+
+func (dao *SloganDAOImpl) SearchSlogan(userID uint) (*model.Slogan, error) {
+	var slogan model.Slogan
+	dao.db.Table("users").Where("id = ?", userID).Select("slogan").Scan(&slogan)
+
 	return &slogan, nil
 }
 

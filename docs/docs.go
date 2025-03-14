@@ -802,6 +802,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/slogan/SearchSlogan": {
+            "get": {
+                "description": "用户获取激励语",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "标语"
+                ],
+                "summary": "获取激励语",
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.PostGoalResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "解析失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "用户未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/user/cancel": {
             "post": {
                 "description": "允许用户注销账号",
@@ -1396,9 +1449,6 @@ const docTemplate = `{
         "response.TaskWithChecks": {
             "type": "object",
             "properties": {
-                "checks": {
-                    "type": "integer"
-                },
                 "completed": {
                     "type": "boolean"
                 },
@@ -1420,7 +1470,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_id": {
-                    "type": "integer"
+                    "type": "string"
                 }
             }
         },

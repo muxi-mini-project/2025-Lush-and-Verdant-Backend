@@ -44,7 +44,7 @@ func InitApp(ConfigPath string) (*route.App, error) {
 	sloganDAOImpl := dao.NewSloganDAOImpl(db)
 	sloganServiceImpl := service.NewSloganServiceImpl(sloganDAOImpl, userDAOImpl)
 	sloganController := controller.NewSloganController(sloganServiceImpl)
-	sloganSvc := route.NewSloganSvc(sloganController)
+	sloganSvc := route.NewSloganSvc(sloganController, jwtClient)
 	goalDAOImpl := dao.NewGoalDAOImpl(db)
 	goalServiceImpl := service.NewGoalServiceImpl(goalDAOImpl)
 	chatGptConfig := config.NewChatGptConfig(viperSetting)
