@@ -2,15 +2,18 @@ package service
 
 import (
 	"2025-Lush-and-Verdant-Backend/api/request"
+	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/dao"
 	"2025-Lush-and-Verdant-Backend/model"
+	"fmt"
 )
 
 type GoalService interface {
-	PostGoal(userID uint, req request.PostGoalRequest) error
+	PostGoal(userID uint, req request.PostGoalRequest) (*model.Goal, error)
 	UpdateGoal(userID uint, goalID uint, req request.PostGoalRequest) error
-	HistoricalGoal(userID uint) (map[string][]model.Task, error)
+	HistoricalGoal(userID uint) (map[string][]response.TaskWithChecks, error)
 	DeleteGoal(userID uint, goalID uint) error
+	CheckTask(userID uint, taskID uint) (int, error)
 }
 
 type GoalServiceImpl struct {
@@ -24,13 +27,13 @@ func NewGoalServiceImpl(goalDao dao.GoalDAO) *GoalServiceImpl {
 }
 
 // PostGoal 创建新的目标及任务
-func (gsr *GoalServiceImpl) PostGoal(userID uint, req request.PostGoalRequest) error {
+func (gsr *GoalServiceImpl) PostGoal(userID uint, req request.PostGoalRequest) (*model.Goal, error) {
 	newGoal := model.Goal{
 		UserID: userID,
 		Date:   req.Date,
 	}
 	if err := gsr.GoalDao.CreateGoal(&newGoal); err != nil {
-		return err
+		return nil, err
 	}
 
 	// 批量创建任务
@@ -41,11 +44,17 @@ func (gsr *GoalServiceImpl) PostGoal(userID uint, req request.PostGoalRequest) e
 			Details: task.Details,
 		}
 		if err := gsr.GoalDao.CreateTask(&newTask); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	// 重新获取Goal，包含预加载的Tasks
+	createdGoal, err := gsr.GoalDao.GetGoal(newGoal.ID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return createdGoal, nil
 }
 
 // UpdateGoal 更新已有目标及任务
@@ -56,12 +65,12 @@ func (gsr *GoalServiceImpl) UpdateGoal(userID uint, goalID uint, req request.Pos
 	}
 
 	goal.Date = req.Date
-	if err := gsr.GoalDao.CreateGoal(goal); err != nil {
+	if err := gsr.GoalDao.UpdateGoal(goal); err != nil {
 		return err
 	}
 
 	// 先删除原有任务，再添加新任务
-	if err := gsr.GoalDao.DeleteTasks(goal.ID); err != nil {
+	if err := gsr.GoalDao.DeleteTasks(goal.ID, userID); err != nil {
 		return err
 	}
 
@@ -70,6 +79,7 @@ func (gsr *GoalServiceImpl) UpdateGoal(userID uint, goalID uint, req request.Pos
 			GoalID:  goal.ID,
 			Title:   task.Title,
 			Details: task.Details,
+			// Completed默认为false
 		}
 		if err := gsr.GoalDao.CreateTask(&newTask); err != nil {
 			return err
@@ -79,16 +89,25 @@ func (gsr *GoalServiceImpl) UpdateGoal(userID uint, goalID uint, req request.Pos
 	return nil
 }
 
-// HistoricalGoal 获取用户所有历史目标及任务
-func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) (map[string][]model.Task, error) {
+// HistoricalGoal 获取用户所有历史目标及任务完成情况
+func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) (map[string][]response.TaskWithChecks, error) {
 	goals, err := gsr.GoalDao.GetGoals(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	goalMap := make(map[string][]model.Task)
+	goalMap := make(map[string][]response.TaskWithChecks)
 	for _, goal := range goals {
-		goalMap[goal.Date] = goal.Tasks
+		tasks := make([]response.TaskWithChecks, 0)
+		for _, task := range goal.Tasks {
+			tasks = append(tasks, response.TaskWithChecks{
+				TaskID:    task.ID,
+				Title:     task.Title,
+				Details:   task.Details,
+				Completed: task.Completed,
+			})
+		}
+		goalMap[goal.Date] = tasks
 	}
 
 	return goalMap, nil
@@ -97,4 +116,32 @@ func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) (map[string][]model.Task
 // DeleteGoal 删除目标及任务
 func (gsr *GoalServiceImpl) DeleteGoal(userID uint, goalID uint) error {
 	return gsr.GoalDao.DeleteGoal(goalID, userID)
+}
+
+// 标记任务为完成
+func (gsr *GoalServiceImpl) CheckTask(userID uint, taskID uint) (int, error) {
+	task, err := gsr.GoalDao.GetTaskByID(taskID)
+	if err != nil {
+		return 0, fmt.Errorf("获取任务失败:%v", err)
+	}
+
+	// 验证任务是否属于该用户
+	goal, err := gsr.GoalDao.GetGoal(task.GoalID, userID)
+	if err != nil || goal.ID == 0 {
+		return 0, fmt.Errorf("无法访问该任务")
+	}
+
+	// 更新任务状态为已完成
+	task.Completed = true
+	if err := gsr.GoalDao.UpdateTask(task); err != nil {
+		return 0, fmt.Errorf("更新任务状态失败:%v", err)
+	}
+
+	// 统计该目标下的已完成任务数量
+	completedCount, err := gsr.GoalDao.CountCompletedTaskByGoal(goal.ID)
+	if err != nil {
+		return 0, fmt.Errorf("统计失败:%v", err)
+	}
+
+	return completedCount, nil
 }

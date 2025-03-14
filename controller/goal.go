@@ -5,6 +5,7 @@ import (
 	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/client"
 	"2025-Lush-and-Verdant-Backend/service"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -56,7 +57,7 @@ func (mc *GoalController) GetGoal(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body request.PostGoalRequest true "任务数据"
-// @Success 200 {object} response.Response "保存成功"
+// @Success 200 {object} response.Response{data=response.PostGoalResponse} "保存成功"
 // @Failure 400 {object} response.Response "解析失败"
 // @Failure 401 {object} response.Response "用户未授权"
 // @Failure 500 {object} response.Response "服务器错误"
@@ -82,13 +83,24 @@ func (mc *GoalController) PostGoal(c *gin.Context) {
 	}
 	userIDUint := uint(userIDInt)
 
-	err := mc.gsr.PostGoal(userIDUint, message)
+	createdGoal, err := mc.gsr.PostGoal(userIDUint, message)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "保存失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "保存成功"})
+	// 提取Task IDs
+	taskIDs := make([]uint, len(createdGoal.Tasks))
+	for i, task := range createdGoal.Tasks {
+		taskIDs[i] = task.ID
+	}
+
+	responseData := response.PostGoalResponse{
+		GoalID:  createdGoal.ID,
+		TaskIDs: taskIDs,
+	}
+
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "保存成功", Data: responseData})
 }
 
 // UpdateGoal 更新目标
@@ -145,7 +157,7 @@ func (mc *GoalController) UpdateGoal(c *gin.Context) {
 // @Tags 目标管理
 // @Accept json
 // @Produce json
-// @Success 200 {object} response.Response "请求成功"
+// @Success 200 {object} response.Response{data=response.TaskWithChecks} "请求成功"
 // @Failure 401 {object} response.Response "用户未授权"
 // @Failure 500 {object} response.Response "服务器错误"
 // @Router /goal/HistoricalGoal [get]
@@ -212,4 +224,46 @@ func (mc *GoalController) DeleteGoal(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "目标删除成功"})
+}
+
+// CheckTask 检查目标
+// @Summary 检查目标
+// @Description 用户检擦指定目标
+// @Tags 目标管理
+// @Accept json
+// @Produce json
+// @Param task_id path int true "任务ID"
+// @Success 200 {object} response.Response{data=response.DailyCount} "目标检查成功"
+// @Failure 401 {object} response.Response "用户未授权"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /goal/CheckTask/{task_id} [post]
+func (mc *GoalController) CheckTask(c *gin.Context) {
+	taskIDStr := c.Param("task_id")
+	taskID, err := strconv.ParseUint(taskIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "无效的任务ID"})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, response.Response{Code: 401, Message: "用户未授权"})
+		return
+	}
+
+	userIDInt, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "类型转换失败"})
+		return
+	}
+	userIDUint := uint(userIDInt)
+
+	dailyCount, err := mc.gsr.CheckTask(userIDUint, uint(taskID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "任务检查失败"})
+		fmt.Println(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "任务检查成功", Data: dailyCount})
 }

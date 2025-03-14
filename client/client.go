@@ -65,7 +65,9 @@ func (cg *ChatGptClient) AskForGoal(c *gin.Context, question request.Question) m
 		2.每个任务必须包含id、title、details三个字段
 		3.id使用连续数字字符串(如"1""2")
 		4.不要添加任何JSON以外的文本
-    
+    	5.请严格按照用户输入的cycle制定计划，不允许出现输入1星期返回1个月的计划的情况
+		6.用户输入的cycle是硬性规定，返回的任务**不得**超出用户要求的时间范围。
+
     输入输出示例1:
 	假设提问制定计划时的日期为2025-3-10
 input:{
