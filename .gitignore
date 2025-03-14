@@ -2,6 +2,8 @@ config/config.yml
 
 .idea/
 
+Dockerfile
+
 docker-compose.yaml
 
 2025-Lush-and-Verdant-Backend

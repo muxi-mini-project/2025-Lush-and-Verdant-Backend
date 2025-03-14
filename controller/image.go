@@ -62,7 +62,7 @@ func (ic *ImageController) GetUserImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取头像失败"})
 		return
 	}
-	c.JSON(http.StatusOK, response.Response{Data: url})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取头像成功", Data: url})
 }
 
 // GetUserAllImage 获取所有用户图片
@@ -92,7 +92,7 @@ func (ic *ImageController) GetUserAllImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取历史头像失败"})
 		return
 	}
-	c.JSON(http.StatusOK, response.Response{Code: 200, Data: urls})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取历史头像成功", Data: urls})
 }
 
 // UpdateUserImage 更新用户头像
@@ -154,7 +154,7 @@ func (ic *ImageController) GetGroupImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取群组头像失败"})
 		return
 	}
-	c.JSON(http.StatusOK, response.Response{Code: 200, Data: url})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取群组头像成功", Data: url})
 }
 
 // GetGroupAllImage 获取所有群组图片
@@ -185,7 +185,7 @@ func (ic *ImageController) GetGroupAllImage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Response{Code: 200, Data: urls})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取群组历史头像成功", Data: urls})
 }
 
 // UpdateGroupImage 更新群组头像
@@ -222,5 +222,5 @@ func (ic *ImageController) UpdateGroupImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "更新群组头像失败"})
 		return
 	}
-	c.JSON(http.StatusOK, response.Response{Message: "更新成功"})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "更新成功"})
 }

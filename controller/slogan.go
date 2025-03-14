@@ -26,7 +26,7 @@ func NewSloganController(ssr service.SloganService) *SloganController {
 // @Accept json
 // @Produce json
 // @Param device_num path string true "设备号"
-// @Success 200 {object} response.Response "获取激励语成功"
+// @Success 200 {object} response.Response{data=response.SloganResponse} "获取激励语成功"
 // @Failure 400 {object} response.Response "设备号不能为空 或 其他错误"
 // @Router /slogan/GetSlogan/{device_num} [get]
 func (uc *SloganController) GetSlogan(c *gin.Context) {
@@ -36,13 +36,13 @@ func (uc *SloganController) GetSlogan(c *gin.Context) {
 		return
 	}
 
-	err := uc.ssr.GetSlogan(device)
+	slogan, err := uc.ssr.GetSlogan(device)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "激励语获取失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取激励语成功"})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取激励语成功", Data: slogan})
 }
 
 // ChangeSlogan 更新激励语
@@ -53,7 +53,7 @@ func (uc *SloganController) GetSlogan(c *gin.Context) {
 // @Produce json
 // @Param user_id path string true "用户ID"
 // @Param slogan body request.Slogan true "新的激励语"
-// @Success 200 {object} response.Response "激励语更新成功"
+// @Success 200 {object} response.Response{data=response.SloganResponse} "激励语更新成功"
 // @Failure 400 {object} response.Response "无该用户 或 其他错误"
 // @Router /slogan/ChangeSlogan/{user_id} [put]
 func (uc *SloganController) ChangeSlogan(c *gin.Context) {
@@ -82,5 +82,5 @@ func (uc *SloganController) ChangeSlogan(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Response{Message: "激励语更新成功"})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "激励语更新成功", Data: newSlogan})
 }

@@ -1,30 +1,38 @@
-# 使用官方 Go 镜像作为构建环境
-FROM golang:1.20 AS builder
+# 第一阶段：构建 Go 应用
+FROM golang:alpine AS builder
 
-# 设置工作目录
+# 设置 Go 代理为七牛云的代理
+ENV GOPROXY=https://goproxy.cn,direct
+
+# 安装需要的依赖
+RUN apk update && apk add --no-cache git
+
+# 切换到 app 目录，构建二进制文件
 WORKDIR /app
 
-# 复制 go.mod 和 go.sum 并下载依赖
-COPY go.mod go.sum ./
-RUN go mod tidy
+# 复制 be-ccnu 服务代码
+COPY . /app
 
-# 复制所有源代码到容器
-COPY . .
+RUN go mod tidy && go build -o app
 
-# 编译 Go 应用，生成可执行文件
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+# 第二阶段：复制编译结果到最终镜像
+FROM alpine
 
-# 使用一个轻量级镜像运行应用
-FROM alpine:latest
+# 安装 tzdata 来设置时区
+RUN apk add --no-cache tzdata
 
-# 设置工作目录
-WORKDIR /root/
+# 设置时区为 Asia/Shanghai
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    echo "Asia/Shanghai" > /etc/timezone
 
-# 复制编译好的二进制文件
-COPY --from=builder /app/main .
+# 设置工作目录为
+WORKDIR /app
 
-# 暴露端口（与 Go 代码中的端口一致）
+# 从 builder 复制编译好的二进制文件
+COPY --from=builder /app/app .
+
+# 开放端口（根据需要设置）
 EXPOSE 8080
 
-# 运行应用
-CMD ["./main"]
+# 启动用户服务
+CMD ["./app"]

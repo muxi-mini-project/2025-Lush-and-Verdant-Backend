@@ -17,7 +17,7 @@ definitions:
     properties:
       id:
         description: 是userId或者groupId
-        type: integer
+        type: string
       url:
         type: string
     type: object
@@ -83,6 +83,11 @@ definitions:
       device_num:
         type: string
     type: object
+  response.DailyCount:
+    properties:
+      daily_count:
+        type: integer
+    type: object
   response.Goals:
     properties:
       goals:
@@ -94,6 +99,15 @@ definitions:
           type: array
         type: object
     type: object
+  response.PostGoalResponse:
+    properties:
+      goal_id:
+        type: integer
+      task_ids:
+        items:
+          type: integer
+        type: array
+    type: object
   response.Response:
     properties:
       code:
@@ -102,10 +116,30 @@ definitions:
       message:
         type: string
     type: object
+  response.SloganResponse:
+    properties:
+      slogan:
+        type: string
+    type: object
+  response.TaskWithChecks:
+    properties:
+      checks:
+        type: integer
+      completed:
+        type: boolean
+      details:
+        type: string
+      task_id:
+        type: integer
+      title:
+        type: string
+    type: object
   response.Token:
     properties:
       token:
         type: string
+      user_id:
+        type: integer
     type: object
   response.URL:
     properties:
@@ -160,6 +194,40 @@ paths:
       summary: 获取上传的token
       tags:
       - image
+  /goal/CheckTask/{task_id}:
+    post:
+      consumes:
+      - application/json
+      description: 用户检擦指定目标
+      parameters:
+      - description: 任务ID
+        in: path
+        name: task_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 目标检查成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.DailyCount'
+              type: object
+        "401":
+          description: 用户未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 检查目标
+      tags:
+      - 目标管理
   /goal/DeleteGoal/{goal_id}:
     delete:
       consumes:
@@ -235,7 +303,12 @@ paths:
         "200":
           description: 请求成功
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TaskWithChecks'
+              type: object
         "401":
           description: 用户未授权
           schema:
@@ -265,7 +338,12 @@ paths:
         "200":
           description: 保存成功
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PostGoalResponse'
+              type: object
         "400":
           description: 解析失败
           schema:
@@ -534,7 +612,12 @@ paths:
         "200":
           description: 激励语更新成功
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.SloganResponse'
+              type: object
         "400":
           description: 无该用户 或 其他错误
           schema:
@@ -559,7 +642,12 @@ paths:
         "200":
           description: 获取激励语成功
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.SloganResponse'
+              type: object
         "400":
           description: 设备号不能为空 或 其他错误
           schema:

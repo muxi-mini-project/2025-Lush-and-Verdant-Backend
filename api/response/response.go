@@ -7,7 +7,8 @@ type Response struct {
 }
 
 type Token struct {
-	Token string `json:"token"`
+	Token  string `json:"token"`
+	UserID string `json:"user_id"`
 }
 
 type UpToken struct {
@@ -30,4 +31,24 @@ type User struct {
 	ID       string `json:"id"`
 	UserName string `json:"username"`
 	Email    string `json:"email"`
+}
+
+type PostGoalResponse struct {
+	GoalID  uint   `json:"goal_id"`
+	TaskIDs []uint `json:"task_ids"`
+}
+
+type SloganResponse struct {
+	Slogan string `json:"slogan"`
+}
+
+type TaskWithChecks struct {
+	TaskID    uint   `json:"task_id"`
+	Title     string `json:"title"`
+	Details   string `json:"details"`
+	Completed bool   `json:"completed"`
+}
+
+type DailyCount struct {
+	DailyCount int `json:"daily_count"`
 }

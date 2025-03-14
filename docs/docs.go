@@ -56,6 +56,62 @@ const docTemplate = `{
                 }
             }
         },
+        "/goal/CheckTask/{task_id}": {
+            "post": {
+                "description": "用户检擦指定目标",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "目标管理"
+                ],
+                "summary": "检查目标",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "任务ID",
+                        "name": "task_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "目标检查成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.DailyCount"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "用户未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/goal/DeleteGoal/{goal_id}": {
             "delete": {
                 "description": "用户删除指定目标",
@@ -175,7 +231,19 @@ const docTemplate = `{
                     "200": {
                         "description": "请求成功",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.TaskWithChecks"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "401": {
@@ -221,7 +289,19 @@ const docTemplate = `{
                     "200": {
                         "description": "保存成功",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.PostGoalResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -648,7 +728,19 @@ const docTemplate = `{
                     "200": {
                         "description": "激励语更新成功",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.SloganResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -686,7 +778,19 @@ const docTemplate = `{
                     "200": {
                         "description": "获取激励语成功",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.SloganResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1127,7 +1231,7 @@ const docTemplate = `{
             "properties": {
                 "id": {
                     "description": "是userId或者groupId",
-                    "type": "integer"
+                    "type": "string"
                 },
                 "url": {
                     "type": "string"
@@ -1230,6 +1334,14 @@ const docTemplate = `{
                 }
             }
         },
+        "response.DailyCount": {
+            "type": "object",
+            "properties": {
+                "daily_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "response.Goals": {
             "type": "object",
             "properties": {
@@ -1247,6 +1359,20 @@ const docTemplate = `{
                 }
             }
         },
+        "response.PostGoalResponse": {
+            "type": "object",
+            "properties": {
+                "goal_id": {
+                    "type": "integer"
+                },
+                "task_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "response.Response": {
             "type": "object",
             "properties": {
@@ -1259,11 +1385,42 @@ const docTemplate = `{
                 }
             }
         },
+        "response.SloganResponse": {
+            "type": "object",
+            "properties": {
+                "slogan": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.TaskWithChecks": {
+            "type": "object",
+            "properties": {
+                "checks": {
+                    "type": "integer"
+                },
+                "completed": {
+                    "type": "boolean"
+                },
+                "details": {
+                    "type": "string"
+                },
+                "task_id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "response.Token": {
             "type": "object",
             "properties": {
                 "token": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

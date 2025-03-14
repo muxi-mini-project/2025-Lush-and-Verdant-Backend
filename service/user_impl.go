@@ -115,7 +115,7 @@ func (usr *UserServiceImpl) UserLogin(c *gin.Context) error {
 				c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "生成token失败"})
 				return err
 			}
-			c.JSON(http.StatusOK, response.Response{Code: 200, Message: fmt.Sprintf("%d", int(user.ID)), Data: token})
+			c.JSON(http.StatusOK, response.Response{Code: 200, Message: "用户登陆成功", Data: response.Token{Token: token, UserID: strconv.Itoa(int(user.ID))}})
 			return nil
 		} else {
 			c.JSON(http.StatusConflict, response.Response{Code: 409, Message: "密码错误"})
