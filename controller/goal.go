@@ -90,13 +90,13 @@ func (mc *GoalController) PostGoal(c *gin.Context) {
 	}
 
 	// 提取Task IDs
-	taskIDs := make([]uint, len(createdGoal.Tasks))
+	taskIDs := make([]string, len(createdGoal.Tasks))
 	for i, task := range createdGoal.Tasks {
-		taskIDs[i] = task.ID
+		taskIDs[i] = strconv.Itoa(int(task.ID))
 	}
 
 	responseData := response.PostGoalResponse{
-		GoalID:  createdGoal.ID,
+		GoalID:  strconv.Itoa(int(createdGoal.ID)),
 		TaskIDs: taskIDs,
 	}
 

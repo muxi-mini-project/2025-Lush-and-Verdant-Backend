@@ -6,6 +6,7 @@ import (
 	"2025-Lush-and-Verdant-Backend/dao"
 	"2025-Lush-and-Verdant-Backend/model"
 	"fmt"
+	"strconv"
 )
 
 type GoalService interface {
@@ -101,7 +102,7 @@ func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) (map[string][]response.T
 		tasks := make([]response.TaskWithChecks, 0)
 		for _, task := range goal.Tasks {
 			tasks = append(tasks, response.TaskWithChecks{
-				TaskID:    task.ID,
+				TaskID:    strconv.Itoa(int(task.ID)),
 				Title:     task.Title,
 				Details:   task.Details,
 				Completed: task.Completed,
