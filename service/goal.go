@@ -11,7 +11,7 @@ import (
 
 type GoalService interface {
 	PostGoal(userID uint, req request.PostGoalRequest) (*model.Goal, error)
-	UpdateGoal(userID uint, goalID uint, req request.PostGoalRequest) error
+	UpdateTask(userID, goalID, taskID uint, req request.TaskRequest) error
 	HistoricalGoal(userID uint) (map[string][]response.TaskWithChecks, error)
 	DeleteGoal(userID uint, goalID uint) error
 	CheckTask(userID uint, taskID uint) (int, error)
@@ -59,32 +59,24 @@ func (gsr *GoalServiceImpl) PostGoal(userID uint, req request.PostGoalRequest) (
 }
 
 // UpdateGoal 更新已有目标及任务
-func (gsr *GoalServiceImpl) UpdateGoal(userID uint, goalID uint, req request.PostGoalRequest) error {
+func (gsr *GoalServiceImpl) UpdateTask(userID, goalID, taskID uint, req request.TaskRequest) error {
 	goal, err := gsr.GoalDao.GetGoal(goalID, userID)
-	if err != nil {
-		return err
+	if err != nil || goal.ID == 0 {
+		return fmt.Errorf("目标不存在或无权访问")
 	}
 
-	goal.Date = req.Date
-	if err := gsr.GoalDao.UpdateGoal(goal); err != nil {
-		return err
+	task, err := gsr.GoalDao.GetTaskByID(taskID)
+	if err != nil || task.GoalID != goalID {
+		return fmt.Errorf("任务不存在")
 	}
 
-	// 先删除原有任务，再添加新任务
-	if err := gsr.GoalDao.DeleteTasks(goal.ID, userID); err != nil {
-		return err
-	}
+	// 更新字段
+	task.Title = req.Title
+	task.Details = req.Details
 
-	for _, task := range req.Tasks {
-		newTask := model.Task{
-			GoalID:  goal.ID,
-			Title:   task.Title,
-			Details: task.Details,
-			// Completed默认为false
-		}
-		if err := gsr.GoalDao.CreateTask(&newTask); err != nil {
-			return err
-		}
+	// 持久化
+	if err := gsr.GoalDao.UpdateTask(task); err != nil {
+		return fmt.Errorf("更新失败:%v", err)
 	}
 
 	return nil

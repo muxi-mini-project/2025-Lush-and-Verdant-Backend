@@ -102,10 +102,10 @@ definitions:
   response.PostGoalResponse:
     properties:
       goal_id:
-        type: integer
+        type: string
       task_ids:
         items:
-          type: integer
+          type: string
         type: array
     type: object
   response.Response:
@@ -128,7 +128,7 @@ definitions:
       details:
         type: string
       task_id:
-        type: integer
+        type: string
       title:
         type: string
     type: object
@@ -192,6 +192,40 @@ paths:
       summary: 获取上传的token
       tags:
       - image
+  /goal/{goal_id}/task/{task_id}:
+    put:
+      consumes:
+      - application/json
+      description: 用户更新指定任务信息
+      parameters:
+      - description: 更新的任务数据
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.PostGoalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 目标更新成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 解析失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 用户未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 更新单个任务
+      tags:
+      - 目标管理
   /goal/CheckTask/{task_id}:
     post:
       consumes:
@@ -355,40 +389,6 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: 创建目标
-      tags:
-      - 目标管理
-  /goal/UpdateGoal/{goal_id}:
-    put:
-      consumes:
-      - application/json
-      description: 用户更新目标信息
-      parameters:
-      - description: 更新的任务数据
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.PostGoalRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 目标更新成功
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: 解析失败
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: 用户未授权
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 更新目标
       tags:
       - 目标管理
   /image/group/{id}:

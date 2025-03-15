@@ -103,9 +103,9 @@ func (mc *GoalController) PostGoal(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "保存成功", Data: responseData})
 }
 
-// UpdateGoal 更新目标
-// @Summary 更新目标
-// @Description 用户更新目标信息
+// UpdateGoal 更新单个任务
+// @Summary 更新单个任务
+// @Description 用户更新指定任务信息
 // @Tags 目标管理
 // @Accept json
 // @Produce json
@@ -114,9 +114,9 @@ func (mc *GoalController) PostGoal(c *gin.Context) {
 // @Failure 400 {object} response.Response "解析失败"
 // @Failure 401 {object} response.Response "用户未授权"
 // @Failure 500 {object} response.Response "服务器错误"
-// @Router /goal/UpdateGoal/{goal_id} [put]
+// @Router /goal/{goal_id}/task/{task_id} [put]
 func (mc *GoalController) UpdateGoal(c *gin.Context) {
-	var message request.PostGoalRequest // 绑定请求中的数据到message结构体
+	var message request.TaskRequest // 绑定请求中的数据到message结构体
 	if err := c.ShouldBindJSON(&message); err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
 		return
@@ -135,14 +135,14 @@ func (mc *GoalController) UpdateGoal(c *gin.Context) {
 		return
 	}
 
-	userIDInt, ok := userID.(int)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "类型转换失败"})
+	taskIDStr := c.Param("task_id")
+	taskID, err := strconv.ParseUint(taskIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "无效的任务ID"})
 		return
 	}
-	userIDUint := uint(userIDInt)
 
-	err = mc.gsr.UpdateGoal(userIDUint, uint(goalID), message)
+	err = mc.gsr.UpdateTask(uint(userID.(int)), uint(goalID), uint(taskID), message)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "目标更新失败"})
 		return

@@ -325,9 +325,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/goal/UpdateGoal/{goal_id}": {
+        "/goal/{goal_id}/task/{task_id}": {
             "put": {
-                "description": "用户更新目标信息",
+                "description": "用户更新指定任务信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -337,7 +337,7 @@ const docTemplate = `{
                 "tags": [
                     "目标管理"
                 ],
-                "summary": "更新目标",
+                "summary": "更新单个任务",
                 "parameters": [
                     {
                         "description": "更新的任务数据",
@@ -1416,12 +1416,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "goal_id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "task_ids": {
                     "type": "array",
                     "items": {
-                        "type": "integer"
+                        "type": "string"
                     }
                 }
             }
@@ -1456,7 +1456,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "task_id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "title": {
                     "type": "string"
