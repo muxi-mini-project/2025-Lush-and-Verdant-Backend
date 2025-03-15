@@ -27,12 +27,6 @@ type Goals struct {
 	Goals map[string][]map[string]string `json:"goals"`
 }
 
-type User struct {
-	ID       string `json:"id"`
-	UserName string `json:"username"`
-	Email    string `json:"email"`
-}
-
 type PostGoalResponse struct {
 	GoalID  string   `json:"goal_id"`
 	TaskIDs []string `json:"task_ids"`
@@ -51,4 +45,42 @@ type TaskWithChecks struct {
 
 type DailyCount struct {
 	DailyCount int `json:"daily_count"`
+}
+
+type GroupInfo struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	IsPublic    bool   `json:"is_public"` //任务是否公开
+	GroupOwner  string `json:"group_owner"`
+}
+
+type GroupInfos struct {
+	Nums   int         `json:"nums"`
+	Groups []GroupInfo `json:"groups"`
+}
+
+type User struct {
+	ID         string `json:"id""`
+	UserName   string `json:"username"`
+	Email      string `json:"email"`
+	GoalPublic bool   `json:"goal_public"`
+	Slogan     string `json:"slogan"`
+}
+
+type Users struct {
+	Nums  int    `json:"nums"`
+	Users []User `json:"users"`
+}
+
+type Message struct {
+	From    string `json:"from"`
+	To      string `json:"to"` // 可以是用户ID或群ID
+	Content string `json:"content"`
+	Type    string `json:"type"`
+	Time    string `json:"time"`
+}
+
+type Messages struct {
+	Messages []Message `json:"messages"`
 }

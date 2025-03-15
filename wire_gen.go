@@ -56,6 +56,14 @@ func InitApp(ConfigPath string) (*route.App, error) {
 	imageServiceImpl := service.NewImageServiceImpl(qiNiuYunConfig, imageDAOImpl)
 	imageController := controller.NewImageController(imageServiceImpl)
 	imageSvc := route.NewImageSvc(imageController, jwtClient)
-	app := route.NewApp(userSvc, sloganSvc, goalSvc, imageSvc)
+	groupDAOImpl := dao.NewGroupDAOImpl(db, redisClient)
+	groupServiceImpl := service.NewGroupServiceImpl(groupDAOImpl)
+	groupController := controller.NewGroupController(groupServiceImpl)
+	groupSve := route.NewGroupSve(groupController)
+	chatDAOImpl := dao.NewChatDAOImpl(redisClient)
+	chatServiceImpl := service.NewChatServiceImpl(chatDAOImpl, groupDAOImpl)
+	chatController := controller.NewChatController(chatServiceImpl)
+	chatSve := route.NewChatSve(chatController, jwtClient)
+	app := route.NewApp(userSvc, sloganSvc, goalSvc, imageSvc, groupSve, chatSve)
 	return app, nil
 }

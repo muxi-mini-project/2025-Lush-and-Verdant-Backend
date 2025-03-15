@@ -11,4 +11,6 @@ var ProviderSet = wire.NewSet(
 	NewEmailDAOImpl,
 	NewEmailCodeDAOImpl,
 	NewImageDAO,
+	NewChatDAOImpl,
+	NewGroupDAOImpl,
 )

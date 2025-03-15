@@ -8,5 +8,7 @@ var ProviderSet = wire.NewSet(
 	NewUserSvc,
 	NewGoalSvc,
 	NewImageSvc,
+	NewChatSve,
+	NewGroupSve,
 	NewApp,
 )
