@@ -23,11 +23,11 @@ func (g *GoalSvc) GoalGroup(r *gin.Engine) {
 
 	Goal := r.Group("/goal").Use(g.jwt.AuthMiddleware())
 	{
-		Goal.GET("/GetGoal", g.gc.GetGoal)
+		Goal.POST("/GetGoal", g.gc.GetGoal)
 		Goal.POST("/MakeGoal", g.gc.PostGoal)
-		Goal.PUT("/:goal_id/task/:task_id", g.gc.UpdateGoal)
+		Goal.PUT("/UpdateGoal/:task_id", g.gc.UpdateTask)
 		Goal.GET("/HistoricalGoal", g.gc.HistoricalGoal)
-		Goal.DELETE("/DeleteGoal/:goal_id", g.gc.DeleteGoal)
+		Goal.DELETE("/DeleteGoal/:task_id", g.gc.DeleteTask)
 		Goal.POST("/CheckTask/:task_id", g.gc.CheckTask)
 	}
 }

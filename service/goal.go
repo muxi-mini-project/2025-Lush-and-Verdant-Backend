@@ -11,9 +11,9 @@ import (
 
 type GoalService interface {
 	PostGoal(userID uint, req request.PostGoalRequest) (*model.Goal, error)
-	UpdateTask(userID, goalID, taskID uint, req request.TaskRequest) error
+	UpdateTask(userID uint, taskID uint, req request.TaskRequest) error
 	HistoricalGoal(userID uint) (map[string][]response.TaskWithChecks, error)
-	DeleteGoal(userID uint, goalID uint) error
+	DeleteTask(userID uint, taskID uint) error
 	CheckTask(userID uint, taskID uint) (int, error)
 }
 
@@ -59,22 +59,21 @@ func (gsr *GoalServiceImpl) PostGoal(userID uint, req request.PostGoalRequest) (
 }
 
 // UpdateGoal 更新已有目标及任务
-func (gsr *GoalServiceImpl) UpdateTask(userID, goalID, taskID uint, req request.TaskRequest) error {
-	goal, err := gsr.GoalDao.GetGoal(goalID, userID)
-	if err != nil || goal.ID == 0 {
-		return fmt.Errorf("目标不存在或无权访问")
-	}
-
+func (gsr *GoalServiceImpl) UpdateTask(userID uint, taskID uint, req request.TaskRequest) error {
 	task, err := gsr.GoalDao.GetTaskByID(taskID)
-	if err != nil || task.GoalID != goalID {
-		return fmt.Errorf("任务不存在")
+	if err != nil {
+		return fmt.Errorf("获取任务失败:%v", err)
 	}
 
-	// 更新字段
+	// 验证任务所属权
+	goal, err := gsr.GoalDao.GetGoal(task.GoalID, userID)
+	if err != nil || goal.ID == 0 {
+		return fmt.Errorf("无权操作该任务")
+	}
+
+	// 更新任务信息
 	task.Title = req.Title
 	task.Details = req.Details
-
-	// 持久化
 	if err := gsr.GoalDao.UpdateTask(task); err != nil {
 		return fmt.Errorf("更新失败:%v", err)
 	}
@@ -107,8 +106,23 @@ func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) (map[string][]response.T
 }
 
 // DeleteGoal 删除目标及任务
-func (gsr *GoalServiceImpl) DeleteGoal(userID uint, goalID uint) error {
-	return gsr.GoalDao.DeleteGoal(goalID, userID)
+func (gsr *GoalServiceImpl) DeleteTask(userID uint, taskID uint) error {
+	task, err := gsr.GoalDao.GetTaskByID(taskID)
+	if err != nil {
+		return fmt.Errorf("获取任务失败:%v", err)
+	}
+
+	// 验证任务所属权
+	goal, err := gsr.GoalDao.GetGoal(task.GoalID, userID)
+	if err != nil || goal.ID == 0 {
+		return fmt.Errorf("无权操作该任务")
+	}
+
+	if err := gsr.GoalDao.DeleteTaskByID(taskID); err != nil {
+		return fmt.Errorf("删除失败:%v", err)
+	}
+
+	return nil
 }
 
 // 标记任务为完成

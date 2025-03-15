@@ -20,6 +20,7 @@ type GoalDAO interface {
 
 	CountCompletedTaskByGoal(goalID uint) (int, error)
 	GetTaskByID(taskID uint) (*model.Task, error)
+	DeleteTaskByID(taskID uint) error
 }
 
 type GoalDAOImpl struct {
@@ -129,4 +130,12 @@ func (dao *GoalDAOImpl) GetTaskByID(taskID uint) (*model.Task, error) {
 		return nil, fmt.Errorf("任务不存在")
 	}
 	return &task, nil
+}
+
+// 根据ID删除任务
+func (dao *GoalDAOImpl) DeleteTaskByID(taskID uint) error {
+	if err := dao.db.Where("id = ?", taskID).Delete(&model.Task{}).Error; err != nil {
+		return fmt.Errorf("删除任务失败: %v", err)
+	}
+	return nil
 }

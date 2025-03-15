@@ -33,7 +33,7 @@ func NewGoalController(gsr service.GoalService, gpt *client.ChatGptClient) *Goal
 // @Success 200 {object} response.Response{data=response.Goals} "数据推送完成"
 // @Failure 400 {object} response.Response "请求参数错误"
 // @Failure 500 {object} response.Response "推送数据失败"
-// @Router /goal/GetGoal [get]
+// @Router /goal/GetGoal [put]
 func (mc *GoalController) GetGoal(c *gin.Context) {
 	var message request.Question
 	if err := c.ShouldBindJSON(&message); err != nil {
@@ -96,26 +96,26 @@ func (mc *GoalController) PostGoal(c *gin.Context) {
 	}
 
 	responseData := response.PostGoalResponse{
-		GoalID:  strconv.Itoa(int(createdGoal.ID)),
+		GoalID:  strconv.Itoa(int(createdGoal.ID)) + "10",
 		TaskIDs: taskIDs,
 	}
 
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "保存成功", Data: responseData})
 }
 
-// UpdateGoal 更新单个任务
-// @Summary 更新单个任务
-// @Description 用户更新指定任务信息
+// UpdateTask 更新任务
+// @Summary 更新任务
+// @Description 用户更新任务信息
 // @Tags 目标管理
 // @Accept json
 // @Produce json
 // @Param request body request.PostGoalRequest true "更新的任务数据"
-// @Success 200 {object} response.Response "目标更新成功"
+// @Success 200 {object} response.Response "任务更新成功"
 // @Failure 400 {object} response.Response "解析失败"
 // @Failure 401 {object} response.Response "用户未授权"
 // @Failure 500 {object} response.Response "服务器错误"
-// @Router /goal/{goal_id}/task/{task_id} [put]
-func (mc *GoalController) UpdateGoal(c *gin.Context) {
+// @Router /goal/UpdateGoal/{task_id} [put]
+func (mc *GoalController) UpdateTask(c *gin.Context) {
 	var message request.TaskRequest // 绑定请求中的数据到message结构体
 	if err := c.ShouldBindJSON(&message); err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
@@ -128,27 +128,28 @@ func (mc *GoalController) UpdateGoal(c *gin.Context) {
 		return
 	}
 
-	goalIDStr := c.Param("goal_id")
-	goalID, err := strconv.ParseUint(goalIDStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "无效的目标ID"})
-		return
-	}
-
 	taskIDStr := c.Param("task_id")
 	taskID, err := strconv.ParseUint(taskIDStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "无效的任务ID"})
+		fmt.Println(err)
 		return
 	}
 
-	err = mc.gsr.UpdateTask(uint(userID.(int)), uint(goalID), uint(taskID), message)
+	userIDInt, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "类型转换失败"})
+		return
+	}
+	userIDUint := uint(userIDInt)
+
+	err = mc.gsr.UpdateTask(userIDUint, uint(taskID), message)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "目标更新失败"})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "任务更新失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "目标更新成功"})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "任务更新成功"})
 }
 
 // HistoricalGoal 查询历史目标
@@ -184,23 +185,23 @@ func (mc *GoalController) HistoricalGoal(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "请求成功", Data: goals})
 }
 
-// DeleteGoal 删除目标
-// @Summary 删除目标
-// @Description 用户删除指定目标
+// DeleteTask 删除任务
+// @Summary 删除任务
+// @Description 用户删除指定任务
 // @Tags 目标管理
 // @Accept json
 // @Produce json
 // @Param task_id path int true "任务ID"
-// @Success 200 {object} response.Response "目标删除成功"
+// @Success 200 {object} response.Response "任务删除成功"
 // @Failure 401 {object} response.Response "用户未授权"
 // @Failure 500 {object} response.Response "服务器错误"
 // @Router /goal/DeleteGoal/{goal_id} [delete]
-func (mc *GoalController) DeleteGoal(c *gin.Context) {
-	goalIDStr := c.Param("goal_id")
+func (mc *GoalController) DeleteTask(c *gin.Context) {
+	taskIDStr := c.Param("task_id")
 
-	goalID, err := strconv.ParseUint(goalIDStr, 10, 64)
+	taskID, err := strconv.ParseUint(taskIDStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "无效的目标ID"})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "无效的任务ID"})
 		return
 	}
 
@@ -217,23 +218,23 @@ func (mc *GoalController) DeleteGoal(c *gin.Context) {
 	}
 	userIDUint := uint(userIDInt)
 
-	err = mc.gsr.DeleteGoal(userIDUint, uint(goalID))
+	err = mc.gsr.DeleteTask(userIDUint, uint(taskID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "目标删除失败"})
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "任务删除失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "目标删除成功"})
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "任务删除成功"})
 }
 
-// CheckTask 检查目标
-// @Summary 检查目标
-// @Description 用户检擦指定目标
+// CheckTask 检查任务
+// @Summary 检查任务
+// @Description 用户检查指定任务
 // @Tags 目标管理
 // @Accept json
 // @Produce json
 // @Param task_id path int true "任务ID"
-// @Success 200 {object} response.Response{data=response.DailyCount} "目标检查成功"
+// @Success 200 {object} response.Response{data=response.DailyCount} "任务检查成功"
 // @Failure 401 {object} response.Response "用户未授权"
 // @Failure 500 {object} response.Response "服务器错误"
 // @Router /goal/CheckTask/{task_id} [post]
