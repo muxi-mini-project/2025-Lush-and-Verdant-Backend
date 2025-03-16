@@ -76,7 +76,7 @@ func (jc *JwtClient) AuthMiddleware() gin.HandlerFunc {
 
 		// 打印出用户ID，或存储在上下文中
 		fmt.Println(userId)
-		c.Set("userID", int(userId)) // 将用户ID存入上下文中，方便后续使用
+		c.Set("user_id", int(userId)) // 将用户ID存入上下文中，方便后续使用
 
 		c.Next()
 	}

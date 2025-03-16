@@ -29,7 +29,7 @@ func NewChatController(csr service.ChatService) *ChatController {
 // @Router /chat/ws [get]
 func (cc *ChatController) HandleWebSocket(c *gin.Context) {
 	// 通过身份验证获取
-	id, _ := c.Get("userID")
+	id, _ := c.Get("user_id")
 	userId, ok := id.(int)
 	if !ok {
 		c.JSON(http.StatusBadRequest, response.Response{
