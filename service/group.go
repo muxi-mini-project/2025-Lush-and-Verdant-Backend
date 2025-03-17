@@ -136,6 +136,7 @@ func (gsr *GroupServiceImpl) GetGroupMemberList(groupNum uint) (*response.Users,
 	// 遍历 users，映射到 response.User
 	for _, v := range users {
 		userList = append(userList, response.User{
+			ID:         tool.UintToString(v.ID),
 			UserName:   v.Username,
 			Email:      v.Email,
 			Slogan:     v.Slogan,

@@ -125,7 +125,7 @@ func (dao *GroupDAOImpl) GetGroupMemberList(groupNum uint) (int, []model.User, e
 }
 
 func (dao *GroupDAOImpl) GetGroupMemberIdList(groupNum uint) ([]int, error) {
-	nums, groups, err := dao.GetGroupList(groupNum)
+	nums, groups, err := dao.GetGroupMemberList(groupNum)
 	if err != nil {
 		return nil, err
 	}

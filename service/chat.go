@@ -158,7 +158,11 @@ func (csr *ChatServiceImpl) HandleGroupMessage(message *request.Message) {
 	}
 	for _, memberID := range memberIDS {
 		//查看接受者是否在线
+		//跳过发送者
 		memberIdStr := strconv.Itoa(memberID)
+		if memberIdStr == message.From {
+			continue
+		}
 		if conn, ok := csr.connections.Load(memberIdStr); ok {
 			response := map[string]interface{}{
 				"type":    "group",
@@ -187,59 +191,76 @@ func (csr *ChatServiceImpl) SendHistoryMessage(userId string, conn *websocket.Co
 	message, err := csr.Dao.ReadMessage(personalStream, lastId)
 	if err != nil {
 		log.Printf("Read message failed: %v", err)
-		return
+	} else {
+		for _, v := range message {
+			// 确保消息ID大于lastId，避免处理旧消息
+			if v.ID <= lastId {
+				log.Printf("跳过旧个人消息 ID %s (当前lastId %s)", v.ID, lastId)
+				continue
+			}
+			if err := conn.WriteJSON(map[string]interface{}{
+				"type":    "personal",
+				"from":    v.Values["from"],
+				"to":      v.Values["to"],
+				"content": v.Values["content"],
+				"time":    v.Values["time"],
+			}); err != nil {
+				log.Printf("用户%s发送消息失败", userId)
+				break //终止循环
+			}
+			//更新读取的位置
+			lastId = v.ID
+		}
+		// 更新读取的位置
+		csr.Dao.SetUserLastId(userId, lastId)
 	}
-	for _, v := range message {
-		conn.WriteJSON(map[string]interface{}{
-			"type":    "personal",
-			"from":    v.Values["from"],
-			"to":      v.Values["to"],
-			"content": v.Values["content"],
-			"time":    v.Values["time"],
-		})
-		//更新读取的位置
-		lastId = v.ID
-	}
-	// 更新读取的位置
-	csr.Dao.SetUserLastId(userId, lastId)
 
 	//群聊消息
 	//获取用户的群聊列表
 	userIdUint, err := tool.StringToUint(userId)
 	if err != nil {
 		log.Printf("StringToUint failed: %v", err)
-		return
-	}
-	groupIdS, err := csr.GroupDao.GetGroupIdList(userIdUint)
-	if err != nil {
-		log.Printf("GetGroupIdList failed: %v", err)
-		return
-	}
-	for _, groupId := range groupIdS {
-		//一个一个处理
-		groupIdStr := strconv.Itoa(groupId)
-		groupStream := "group:msg:" + groupIdStr
-		groupLastId := csr.Dao.GetGroupLastId(userId, groupIdStr)
-
-		groupMessages, err := csr.Dao.ReadMessage(groupStream, groupLastId)
+	} else {
+		groupIdS, err := csr.GroupDao.GetGroupIdList(userIdUint)
 		if err != nil {
-			log.Printf("Read message failed: %v", err)
+			log.Printf("GetGroupIdList failed: %v", err)
 			return
 		}
-		for _, v := range groupMessages {
-			conn.WriteJSON(map[string]interface{}{
-				"type":    "group",
-				"from":    v.Values["from"],
-				"to":      v.Values["to"], //群聊id
-				"content": v.Values["content"],
-				"time":    v.Values["time"],
-			})
-			//更新读取的位置
-			groupLastId = v.ID
+		for _, groupId := range groupIdS {
+			//一个一个处理
+			groupIdStr := strconv.Itoa(groupId)
+			groupStream := "group:msg:" + groupIdStr
+			groupLastId := csr.Dao.GetGroupLastId(userId, groupIdStr)
+
+			groupMessages, err := csr.Dao.ReadMessage(groupStream, groupLastId)
+			if err != nil {
+				log.Printf("Read message failed: %v", err)
+				return
+			}
+			for _, v := range groupMessages {
+				if v.ID <= groupLastId {
+					log.Printf("跳过旧群组消息 ID %s (当前lastId %s)", v.ID, groupLastId)
+					continue
+				}
+				// 发送消息
+				if err := conn.WriteJSON(map[string]interface{}{
+					"type":    "group",
+					"from":    v.Values["from"],
+					"to":      groupIdStr,
+					"content": v.Values["content"],
+					"time":    v.Values["time"],
+				}); err != nil {
+					log.Printf("发送群组 %s 消息失败: %v", groupIdStr, err)
+					break // 终止当前群组的消息处理
+				}
+				//更新读取的位置
+				groupLastId = v.ID
+			}
+			// 更新读取的位置
+			csr.Dao.SetGroupLastId(userId, groupIdStr, groupLastId)
 		}
-		// 更新读取的位置
-		csr.Dao.SetGroupLastId(userId, groupIdStr, groupLastId)
 	}
+
 }
 
 // GetUserHistory 获取用户历史聊天记录
