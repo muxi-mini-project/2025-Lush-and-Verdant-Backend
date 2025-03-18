@@ -258,3 +258,29 @@ func (gc *GroupController) GetTenGroup(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取成功", Data: groups})
 }
+
+// CheckGroupMember 判断用户是否加入小组
+// @Summary 判断用户是否加入小组
+// @Description 通过用户id和群号判断用户是否加入群聊
+// @Tags Group
+// @Accept json
+// @Produce json
+// @Param request body request.GroupMember true "请求参数"
+// @Success 200 {object} response.Response "用户已加入该群聊"
+// @Failure 404 {object} response.Response "用户未加入群聊"
+// @Failure 400 {object} response.Response "请求参数错误"
+// @Router /group/member/check [post]
+func (gc *GroupController) CheckGroupMember(c *gin.Context) {
+	// 通过用户id和群号判断用户是否加入群聊
+	var checkMember *request.GroupMember
+	if err := c.ShouldBindJSON(&checkMember); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: err.Error()})
+		return
+	}
+	ok := gc.gsr.CheckGroupMember(checkMember)
+	if ok {
+		c.JSON(http.StatusOK, response.Response{Code: 200, Message: "用户已加入该群聊"})
+	} else {
+		c.JSON(http.StatusNotFound, response.Response{Code: 404, Message: "用户未加入群聊"})
+	}
+}

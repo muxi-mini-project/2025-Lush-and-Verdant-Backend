@@ -91,3 +91,8 @@ type UserHistory struct {
 type GroupHistory struct {
 	GroupId string `json:"group_id"`
 }
+
+type GroupMember struct {
+	GroupId string `json:"group_id"`
+	UserId  string `json:"user_id"`
+}

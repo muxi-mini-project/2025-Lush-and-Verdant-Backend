@@ -20,6 +20,7 @@ type GroupService interface {
 	GetGroupMemberList(groupNum uint) (*response.Users, error)
 	GetGroupList(userId uint) (*response.GroupInfos, error)
 	GetTenGroup(pn int) ([]response.GroupInfo, error)
+	CheckGroupMember(group *request.GroupMember) bool
 }
 
 type GroupServiceImpl struct {
@@ -221,4 +222,8 @@ func (gsr *GroupServiceImpl) GetTenGroup(pn int) ([]response.GroupInfo, error) {
 		})
 	}
 	return groupList, nil
+}
+
+func (gsr *GroupServiceImpl) CheckGroupMember(group *request.GroupMember) bool {
+	return gsr.Dao.CheckMember(group.UserId, group.GroupId)
 }

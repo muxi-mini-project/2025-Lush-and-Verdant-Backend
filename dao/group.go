@@ -22,6 +22,7 @@ type GroupDAO interface {
 	AddGroupMember(userId uint, groupNum uint) error
 	DeleteGroupMember(userId uint, groupNum uint) error
 	GetTenGroup(offset int) ([]model.Group, error)
+	CheckMember(userId, groupId string) bool
 }
 
 type GroupDAOImpl struct {
@@ -54,15 +55,13 @@ func (dao *GroupDAOImpl) CreteGroup(group *model.Group) error {
 	if err != nil {
 		return fmt.Errorf("创建群聊，绑定群主失败")
 	}
+
+	// 添加一层缓存
+	_, err = dao.rdb.SAdd(context.TODO(), "check:"+fmt.Sprintf("%d", user.ID), group.ID).Result()
+	if err != nil {
+		return fmt.Errorf("创建群聊，添加redis缓存失败")
+	}
 	return nil
-	// todo 待优化
-	// todo 加上缓存
-	////在redis中set存取群id和用户id
-	//id := strconv.Itoa(int(group.ID))
-	//err := dao.rdb.SAdd(context.Background(), "group:members:"+id, group.GroupOwnerId).Err()
-	//if err != nil {
-	//	return fmt.Errorf("创建群聊，绑定群主失败")
-	//}
 }
 
 // UpdateGroup 更新群的相关介绍
@@ -174,6 +173,12 @@ func (dao *GroupDAOImpl) AddGroupMember(userId uint, groupNum uint) error {
 	if err != nil {
 		return fmt.Errorf("添加用户失败")
 	}
+
+	// 添加一层缓存
+	_, err = dao.rdb.SAdd(context.TODO(), "check:"+fmt.Sprintf("%d", user.ID), group.ID).Result()
+	if err != nil {
+		return fmt.Errorf("添加redis缓存失败")
+	}
 	return nil
 }
 
@@ -206,4 +211,9 @@ func (dao *GroupDAOImpl) GetTenGroup(offset int) ([]model.Group, error) {
 		return nil, fmt.Errorf("没有更多小组了")
 	}
 	return groups, nil
+}
+
+func (dao *GroupDAOImpl) CheckMember(userId, groupId string) bool {
+	ok := dao.rdb.SIsMember(context.TODO(), "check:"+userId, groupId).Val()
+	return ok
 }

@@ -29,5 +29,6 @@ func (g *GroupSve) Group(r *gin.Engine) {
 		group.POST("/member/add", g.gc.AddGroupMember)
 		group.POST("/member/delete", g.gc.DeleteGroupMember)
 		group.GET("/ten", g.gc.GetTenGroup)
+		group.POST("/check", g.gc.CheckGroupMember)
 	}
 }
