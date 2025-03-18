@@ -268,3 +268,56 @@ func (mc *GoalController) CheckTask(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "任务检查成功", Data: dailyCount})
 }
+
+// PostGoals 批量创建目标
+// @Summary 批量创建目标
+// @Description 用户批量创建新目标
+// @Tags 目标管理
+// @Accept json
+// @Produce json
+// @Param request body request.PostGoalRequests true "任务数据"
+// @Success 200 {object} response.Response{data=response.PostGoalResponse} "保存成功"
+// @Failure 400 {object} response.Response "解析失败"
+// @Failure 401 {object} response.Response "用户未授权"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /goal/MakeGoals [post]
+func (mc *GoalController) PostGoals(c *gin.Context) {
+	var message request.PostGoalRequests
+	if err := c.ShouldBindJSON(&message); err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "解析失败"})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, response.Response{Code: 401, Message: "用户未授权"})
+		return
+	}
+
+	userIDInt, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "类型转换失败"})
+		return
+	}
+	userIDUint := uint(userIDInt)
+
+	createdGoals, err := mc.gsr.PostGoals(userIDUint, message)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "保存失败"})
+		return
+	}
+
+	var responseData []response.PostGoalResponse
+	for _, goals := range createdGoals {
+		taskIDs := make([]string, len(goals.Tasks))
+		for i, task := range goals.Tasks {
+			taskIDs[i] = strconv.Itoa(int(task.ID))
+		}
+		responseData = append(responseData, response.PostGoalResponse{
+			GoalID:  strconv.Itoa(int(goals.ID)) + "10",
+			TaskIDs: taskIDs,
+		})
+	}
+
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "保存成功", Data: responseData})
+}

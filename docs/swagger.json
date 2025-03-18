@@ -456,6 +456,70 @@
                 }
             }
         },
+        "/goal/MakeGoals": {
+            "post": {
+                "description": "用户批量创建新目标",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "目标管理"
+                ],
+                "summary": "批量创建目标",
+                "parameters": [
+                    {
+                        "description": "任务数据",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.PostGoalRequests"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "保存成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.PostGoalResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "解析失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "用户未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/goal/UpdateGoal/{task_id}": {
             "put": {
                 "description": "用户更新任务信息",
@@ -1960,6 +2024,17 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/request.TaskRequest"
+                    }
+                }
+            }
+        },
+        "request.PostGoalRequests": {
+            "type": "object",
+            "properties": {
+                "goals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.PostGoalRequest"
                     }
                 }
             }
