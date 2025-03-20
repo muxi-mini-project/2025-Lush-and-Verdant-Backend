@@ -77,13 +77,24 @@ func (dao *GroupDAOImpl) UpdateGroup(group *model.Group) error {
 // todo 待优化
 // todo 同时清除redis的缓存
 func (dao *GroupDAOImpl) DeleteGroup(group *model.Group) error {
+	//清除一下缓存
+	//获取群成员列表
+	memberIDS, err := dao.GetGroupMemberIdList(group.ID)
+	for _, memberID := range memberIDS {
+		//删除缓存
+		_, err = dao.rdb.SRem(context.TODO(), "check:"+fmt.Sprintf("%d", memberID), group.ID).Result()
+		if err != nil {
+			return fmt.Errorf("解散群聊，删除redis缓存失败")
+		}
+	}
+	//从数据库中删除群聊
 	result := dao.db.Model(&group).Unscoped().Delete(&group)
 	if result.Error != nil {
 		return fmt.Errorf("解散群聊%s失败", group.Name)
 	}
 
 	//清除群聊的聊天记录
-	_, err := dao.rdb.Del(context.TODO(), "group:msg:"+strconv.Itoa(int(group.ID))).Result()
+	_, err = dao.rdb.Del(context.TODO(), "group:msg:"+strconv.Itoa(int(group.ID))).Result()
 	if err != nil {
 		return fmt.Errorf("解散群聊，清除redis聊天记录失败")
 	}
@@ -196,6 +207,12 @@ func (dao *GroupDAOImpl) DeleteGroupMember(userId uint, groupNum uint) error {
 	err = dao.db.Model(&group).Association("Users").Delete(&user)
 	if err != nil {
 		return fmt.Errorf("退出群聊失败")
+	}
+
+	// 同时删除缓存
+	_, err = dao.rdb.SRem(context.TODO(), "check:"+fmt.Sprintf("%d", user.ID), group.ID).Result()
+	if err != nil {
+		return fmt.Errorf("退出群聊，删除redis缓存失败")
 	}
 	return nil
 }
