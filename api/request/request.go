@@ -62,6 +62,10 @@ type PostGoalRequest struct {
 	Tasks []TaskRequest `json:"tasks"` // 该日期下的任务列表
 }
 
+type PostGoalRequests struct {
+	Goals []PostGoalRequest `json:"goals"`
+}
+
 type GroupRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`

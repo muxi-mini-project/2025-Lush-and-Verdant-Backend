@@ -29,5 +29,6 @@ func (g *GoalSvc) GoalGroup(r *gin.Engine) {
 		Goal.GET("/HistoricalGoal", g.gc.HistoricalGoal)
 		Goal.DELETE("/DeleteGoal/:task_id", g.gc.DeleteTask)
 		Goal.POST("/CheckTask/:task_id", g.gc.CheckTask)
+		Goal.POST("/MakeGoals", g.gc.PostGoals)
 	}
 }

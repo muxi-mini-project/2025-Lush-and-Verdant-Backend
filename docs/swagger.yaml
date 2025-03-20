@@ -70,6 +70,13 @@ definitions:
           $ref: '#/definitions/request.TaskRequest'
         type: array
     type: object
+  request.PostGoalRequests:
+    properties:
+      goals:
+        items:
+          $ref: '#/definitions/request.PostGoalRequest'
+        type: array
+    type: object
   request.Question:
     properties:
       cycle:
@@ -544,6 +551,45 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: 创建目标
+      tags:
+      - 目标管理
+  /goal/MakeGoals:
+    post:
+      consumes:
+      - application/json
+      description: 用户批量创建新目标
+      parameters:
+      - description: 任务数据
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.PostGoalRequests'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 保存成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PostGoalResponse'
+              type: object
+        "400":
+          description: 解析失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 用户未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 批量创建目标
       tags:
       - 目标管理
   /goal/UpdateGoal/{task_id}:

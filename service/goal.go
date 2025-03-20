@@ -11,6 +11,7 @@ import (
 
 type GoalService interface {
 	PostGoal(userID uint, req request.PostGoalRequest) (*model.Goal, error)
+	PostGoals(userID uint, req request.PostGoalRequests) ([]model.Goal, error)
 	UpdateTask(userID uint, taskID uint, req request.TaskRequest) error
 	HistoricalGoal(userID uint) (map[string][]response.TaskWithChecks, error)
 	DeleteTask(userID uint, taskID uint) error
@@ -151,4 +152,41 @@ func (gsr *GoalServiceImpl) CheckTask(userID uint, taskID uint) (int, error) {
 	}
 
 	return completedCount, nil
+}
+
+func (gsr *GoalServiceImpl) PostGoals(userID uint, req request.PostGoalRequests) ([]model.Goal, error) {
+	newGoals := make([]model.Goal, 0)
+
+	// 遍历每个目标请求
+	for _, goalReq := range req.Goals {
+		// 创建新目标
+		newGoal := model.Goal{
+			UserID: userID,
+			Date:   goalReq.Date,
+		}
+		if err := gsr.GoalDao.CreateGoal(&newGoal); err != nil {
+			return nil, err
+		}
+
+		// 创建任务
+		for _, task := range goalReq.Tasks {
+			newTask := model.Task{
+				GoalID:  newGoal.ID,
+				Title:   task.Title,
+				Details: task.Details,
+			}
+			if err := gsr.GoalDao.CreateTask(&newTask); err != nil {
+				return nil, err
+			}
+		}
+
+		createdGoal, err := gsr.GoalDao.GetGoal(newGoal.ID, userID)
+		if err != nil {
+			return nil, err
+		}
+
+		newGoals = append(newGoals, *createdGoal)
+	}
+
+	return newGoals, nil
 }
