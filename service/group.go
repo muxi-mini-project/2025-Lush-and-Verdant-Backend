@@ -62,23 +62,28 @@ func (gsr *GroupServiceImpl) CreateGroup(group *request.GroupRequest) (*response
 }
 
 func (gsr *GroupServiceImpl) UpdateGroup(group *request.GroupRequest) (*response.GroupInfo, error) {
-	var Group model.Group
-	BindGroup(&Group, group)
+
 	groupNum, err := strconv.Atoi(group.GroupNum)
 	if err != nil {
 		return nil, fmt.Errorf("群号有问题")
 	}
-	//绑定群id
-	Group.ID = uint(groupNum)
+
+	// 先获取群聊
+	Group, err := gsr.Dao.GetGroupInfo(uint(groupNum))
+	if err != nil {
+		return nil, fmt.Errorf("获取群聊出错")
+	}
 
 	id, err := strconv.Atoi(group.ExecuteId)
 	if err != nil {
 		return nil, err
 	}
-	//先检测权限
-	ok := gsr.Dao.CheckGroupOwner(&Group, uint(id))
+
+	//再检测权限
+	ok := gsr.Dao.CheckGroupOwner(Group.ID, uint(id))
 	if ok {
-		err := gsr.Dao.UpdateGroup(&Group)
+		BindGroup(Group, group)
+		err := gsr.Dao.UpdateGroup(Group)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +103,7 @@ func (gsr *GroupServiceImpl) DeleteGroup(groupNum uint, executeId uint) error {
 	//绑定群id
 	Group.ID = groupNum
 	//检测权限
-	ok := gsr.Dao.CheckGroupOwner(&Group, executeId)
+	ok := gsr.Dao.CheckGroupOwner(Group.ID, executeId)
 	if ok {
 		err := gsr.Dao.DeleteGroup(&Group)
 		if err != nil {

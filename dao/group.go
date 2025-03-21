@@ -13,7 +13,7 @@ type GroupDAO interface {
 	CreteGroup(group *model.Group) error
 	UpdateGroup(group *model.Group) error
 	DeleteGroup(group *model.Group) error
-	CheckGroupOwner(group *model.Group, useId uint) bool
+	CheckGroupOwner(groupID uint, useId uint) bool
 	GetGroupInfo(groupNum uint) (*model.Group, error)
 	GetGroupMemberList(groupNum uint) (int, []model.User, error)
 	GetGroupMemberIdList(groupNum uint) ([]int, error)
@@ -102,9 +102,9 @@ func (dao *GroupDAOImpl) DeleteGroup(group *model.Group) error {
 }
 
 // CheckGroupOwner 检测是否为群主
-func (dao *GroupDAOImpl) CheckGroupOwner(group *model.Group, useId uint) bool {
-
-	result := dao.db.Where("id = ?", group.ID).First(&group)
+func (dao *GroupDAOImpl) CheckGroupOwner(groupID uint, useId uint) bool {
+	var group model.Group
+	result := dao.db.Where("id = ?", groupID).First(&group)
 	if result.Error != nil {
 		return false
 	}
