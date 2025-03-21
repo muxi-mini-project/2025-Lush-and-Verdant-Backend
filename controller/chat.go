@@ -3,6 +3,7 @@ package controller
 import (
 	"2025-Lush-and-Verdant-Backend/api/request"
 	"2025-Lush-and-Verdant-Backend/api/response"
+	"2025-Lush-and-Verdant-Backend/middleware"
 	"2025-Lush-and-Verdant-Backend/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -11,10 +12,11 @@ import (
 
 type ChatController struct {
 	csr service.ChatService
+	jwt *middleware.JwtClient
 }
 
-func NewChatController(csr service.ChatService) *ChatController {
-	return &ChatController{csr: csr}
+func NewChatController(csr service.ChatService, jwt *middleware.JwtClient) *ChatController {
+	return &ChatController{csr: csr, jwt: jwt}
 }
 
 // HandleWebSocket 处理WebSocket连接
@@ -29,16 +31,15 @@ func NewChatController(csr service.ChatService) *ChatController {
 // @Router /chat/ws [get]
 func (cc *ChatController) HandleWebSocket(c *gin.Context) {
 	// 通过身份验证获取
-	id, _ := c.Get("user_id")
-	userId, ok := id.(int)
-	if !ok {
+	tokenString := c.Query("token")
+	id, err := cc.jwt.ParseToken(tokenString)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, response.Response{
 			Code:    400,
-			Message: "id must be int",
+			Message: "token解析失败",
 		})
-		return // 添加return以避免继续执行
 	}
-	idStr := strconv.Itoa(userId)
+	idStr := strconv.Itoa(id)
 	cc.csr.HandleWebSocket(c.Writer, c.Request, idStr)
 }
 

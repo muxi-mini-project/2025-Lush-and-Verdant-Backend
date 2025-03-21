@@ -81,3 +81,39 @@ func (jc *JwtClient) AuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func (jc *JwtClient) ParseToken(tokenString string) (int, error) {
+	if tokenString == "" {
+		return 0, fmt.Errorf("token is empty")
+	}
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(jc.cfg.SecretKey), nil // 替换为你的密钥
+	})
+
+	if err != nil {
+		return 0, fmt.Errorf("token is invalid")
+	}
+
+	if !token.Valid {
+		return 0, fmt.Errorf("token is invalid")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return 0, fmt.Errorf("未认证")
+	}
+
+	// 获取 user_id 并转换为 int 类型
+	userId, ok := claims["user_id"].(float64)
+	if !ok {
+		return 0, fmt.Errorf("无法获取user_id")
+	}
+
+	// 打印出用户ID，或存储在上下文中
+	fmt.Println(userId)
+	return int(userId), nil
+}

@@ -62,7 +62,7 @@ func InitApp(ConfigPath string) (*route.App, error) {
 	groupSve := route.NewGroupSve(groupController)
 	chatDAOImpl := dao.NewChatDAOImpl(redisClient)
 	chatServiceImpl := service.NewChatServiceImpl(chatDAOImpl, groupDAOImpl)
-	chatController := controller.NewChatController(chatServiceImpl)
+	chatController := controller.NewChatController(chatServiceImpl, jwtClient)
 	chatSve := route.NewChatSve(chatController, jwtClient)
 	app := route.NewApp(userSvc, sloganSvc, goalSvc, imageSvc, groupSve, chatSve)
 	return app, nil
