@@ -17,10 +17,11 @@ func NewChatSve(cc *controller.ChatController, jwt *middleware.JwtClient) *ChatS
 
 func (cs *ChatSve) ChatGroup(r *gin.Engine) {
 	r.Use(middleware.Cors())
-	r.Use(cs.jwt.AuthMiddleware())
+
 	Chat := r.Group("/chat")
 	{
 		Chat.GET("/ws", cs.cc.HandleWebSocket)
+		Chat.Use(cs.jwt.AuthMiddleware())
 		Chat.POST("/user/history", cs.cc.GetUserHistory)
 		Chat.POST("/group/history", cs.cc.GetGroupHistory)
 	}
