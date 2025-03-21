@@ -204,6 +204,13 @@ func (dao *GroupDAOImpl) DeleteGroupMember(userId uint, groupNum uint) error {
 	if err != nil {
 		return fmt.Errorf("查询群聊失败")
 	}
+	// 判断是否为群主
+	if group.GroupOwnerId == userId {
+		err := dao.DeleteGroup(&group)
+		if err != nil {
+			return fmt.Errorf("解散群聊失败")
+		}
+	}
 	err = dao.db.Model(&group).Association("Users").Delete(&user)
 	if err != nil {
 		return fmt.Errorf("退出群聊失败")
