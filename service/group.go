@@ -21,6 +21,7 @@ type GroupService interface {
 	GetGroupList(userId uint) (*response.GroupInfos, error)
 	GetTenGroup(pn int) ([]response.GroupInfo, error)
 	CheckGroupMember(group *request.GroupMember) bool
+	FindGroup(name string) (*response.GroupInfos, error)
 }
 
 type GroupServiceImpl struct {
@@ -231,4 +232,30 @@ func (gsr *GroupServiceImpl) GetTenGroup(pn int) ([]response.GroupInfo, error) {
 
 func (gsr *GroupServiceImpl) CheckGroupMember(group *request.GroupMember) bool {
 	return gsr.Dao.CheckMember(group.UserId, group.GroupId)
+}
+
+func (gsr *GroupServiceImpl) FindGroup(name string) (*response.GroupInfos, error) {
+	groups, err := gsr.Dao.FindGroup(name)
+	if err != nil {
+		return nil, err
+	}
+	if len(groups) == 0 {
+		return nil, fmt.Errorf("未找到群聊")
+	}
+	groupList := make([]response.GroupInfo, 0, len(groups))
+	for _, v := range groups {
+		groupList = append(groupList, response.GroupInfo{
+			ID:          tool.UintToString(v.ID),
+			Name:        v.Name,
+			Description: v.Description,
+			IsPublic:    v.IsPublic,
+			GroupOwner:  tool.UintToString(v.GroupOwnerId),
+		})
+	}
+	// 构造返回结果
+	groupsRes := response.GroupInfos{
+		Nums:   len(groups),
+		Groups: groupList,
+	}
+	return &groupsRes, nil
 }

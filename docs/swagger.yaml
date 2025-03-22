@@ -174,6 +174,11 @@ definitions:
       nums:
         type: integer
     type: object
+  response.Likes:
+    properties:
+      nums:
+        type: string
+    type: object
   response.Message:
     properties:
       content:
@@ -683,6 +688,28 @@ paths:
       summary: 解散群聊
       tags:
       - Group
+  /group/find:
+    get:
+      description: 通过群名模糊搜索所有的小组
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询到群聊
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                Data:
+                  $ref: '#/definitions/response.GroupInfos'
+              type: object
+        "400":
+          description: 出现错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 模糊搜索所有的小组
+      tags:
+      - Group
   /group/info/{groupNum}:
     get:
       consumes:
@@ -1111,6 +1138,72 @@ paths:
       summary: 更新用户头像
       tags:
       - image
+  /like/get/{to}:
+    get:
+      description: 获取森林点赞数
+      parameters:
+      - description: 用户id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                Data:
+                  $ref: '#/definitions/response.Likes'
+              type: object
+        "400":
+          description: 请求参数错误或获取失败
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取森林点赞数
+      tags:
+      - Like
+  /like/send:
+    post:
+      consumes:
+      - application/json
+      description: 点赞和取消点赞
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 点赞请求成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误或获取失败
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 点赞和取消点赞
+      tags:
+      - Like
+  /like/status:
+    post:
+      consumes:
+      - application/json
+      description: 获取点赞状态
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 已点赞
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误或获取失败
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取点赞状态
+      tags:
+      - Like
   /slogan/ChangeSlogan/{user_id}:
     put:
       consumes:

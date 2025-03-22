@@ -23,6 +23,7 @@ type GroupDAO interface {
 	DeleteGroupMember(userId uint, groupNum uint) error
 	GetTenGroup(offset int) ([]model.Group, error)
 	CheckMember(userId, groupId string) bool
+	FindGroup(name string) ([]model.Group, error)
 }
 
 type GroupDAOImpl struct {
@@ -240,4 +241,13 @@ func (dao *GroupDAOImpl) GetTenGroup(offset int) ([]model.Group, error) {
 func (dao *GroupDAOImpl) CheckMember(userId, groupId string) bool {
 	ok := dao.rdb.SIsMember(context.TODO(), "check:"+userId, groupId).Val()
 	return ok
+}
+
+func (dao *GroupDAOImpl) FindGroup(name string) ([]model.Group, error) {
+	var groups []model.Group
+	result := dao.db.Where("name COLLATE utf8mb4_general_ci LIKE ?", "%"+name+"%").Find(&groups) //解决大小写敏感问题
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return groups, nil
 }

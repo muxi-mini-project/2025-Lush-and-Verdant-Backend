@@ -284,3 +284,32 @@ func (gc *GroupController) CheckGroupMember(c *gin.Context) {
 		c.JSON(http.StatusNotFound, response.Response{Code: 404, Message: "用户未加入群聊"})
 	}
 }
+
+// FindGroup 模糊搜索所有的小组
+// @Summary 模糊搜索所有的小组
+// @Description 通过群名模糊搜索所有的小组
+// @Tags Group
+// @Produce json
+// @Success 200 {object} response.Response{Data=response.GroupInfos} "查询到群聊"
+// @Failure 400 {object} response.Response "出现错误"
+// @Router /group/find [get]
+func (gc *GroupController) FindGroup(c *gin.Context) {
+	name := c.Query("name")
+	if name == "" {
+		c.JSON(http.StatusBadRequest, response.Response{
+			Code:    400,
+			Message: "群名不能为空",
+		})
+		return
+	}
+	groups, err := gc.gsr.FindGroup(name)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response.Response{
+		Code:    200,
+		Message: "查找成功",
+		Data:    groups,
+	})
+}

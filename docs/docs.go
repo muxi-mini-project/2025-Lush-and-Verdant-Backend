@@ -675,6 +675,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/group/find": {
+            "get": {
+                "description": "通过群名模糊搜索所有的小组",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "模糊搜索所有的小组",
+                "responses": {
+                    "200": {
+                        "description": "查询到群聊",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/response.GroupInfos"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "出现错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/group/info/{groupNum}": {
             "get": {
                 "description": "根据群号获取群聊的详细信息，包括人数、群聊名称和群号",
@@ -1361,6 +1399,111 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/like/get/{to}": {
+            "get": {
+                "description": "获取森林点赞数",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like"
+                ],
+                "summary": "获取森林点赞数",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "Data": {
+                                            "$ref": "#/definitions/response.Likes"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误或获取失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/like/send": {
+            "post": {
+                "description": "点赞和取消点赞",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like"
+                ],
+                "summary": "点赞和取消点赞",
+                "responses": {
+                    "200": {
+                        "description": "点赞请求成功",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误或获取失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/like/status": {
+            "post": {
+                "description": "获取点赞状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Like"
+                ],
+                "summary": "获取点赞状态",
+                "responses": {
+                    "200": {
+                        "description": "已点赞",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误或获取失败",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -2198,6 +2341,14 @@ const docTemplate = `{
                 },
                 "nums": {
                     "type": "integer"
+                }
+            }
+        },
+        "response.Likes": {
+            "type": "object",
+            "properties": {
+                "nums": {
+                    "type": "string"
                 }
             }
         },
