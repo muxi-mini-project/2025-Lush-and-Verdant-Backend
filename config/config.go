@@ -12,6 +12,7 @@ var ProviderSet = wire.NewSet(
 	NewChatGptConfig,
 	NewQQConfig,
 	NewQNYConfig,
+	NewKafkaConfig,
 )
 
 type MySQLConfig struct {
@@ -50,6 +51,10 @@ type RedisConfig struct {
 	Addr     string `yaml:"addr"`
 	Password string `yaml:"password"`
 	DB       int    `yaml:"db"`
+}
+
+type KafkaConfig struct {
+	Addr string `yaml:"addr"`
 }
 
 func NewMySQLConfig(vs *ViperSetting) *MySQLConfig {
@@ -98,4 +103,10 @@ func NewQNYConfig(vs *ViperSetting) *QiNiuYunConfig {
 	var qiNiuYunConfig = &QiNiuYunConfig{}
 	vs.ReadSection("qiniuyun", &qiNiuYunConfig)
 	return qiNiuYunConfig
+}
+
+func NewKafkaConfig(vs *ViperSetting) *KafkaConfig {
+	var kafkaConfig = &KafkaConfig{}
+	vs.ReadSection("kafka", &kafkaConfig)
+	return kafkaConfig
 }

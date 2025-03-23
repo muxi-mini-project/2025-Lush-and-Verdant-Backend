@@ -10,4 +10,5 @@ var ProviderSet = wire.NewSet(
 	NewImageController,
 	NewGroupController,
 	NewChatController,
+	NewLikeController,
 )
