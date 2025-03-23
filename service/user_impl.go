@@ -290,3 +290,7 @@ func (usr *UserServiceImpl) UpdateUserInfo(user *request.UserUpdate) error {
 	}
 	return nil
 }
+
+func (usr *UserServiceImpl) RandUser() (*model.User, error) {
+	return usr.Dao.RandUser()
+}

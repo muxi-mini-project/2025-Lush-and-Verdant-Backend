@@ -31,6 +31,7 @@ func InitApp(ConfigPath string) (*route.App, error) {
 		wire.Bind(new(service.ImageService), new(*service.ImageServiceImpl)),
 		wire.Bind(new(service.ChatService), new(*service.ChatServiceImpl)),
 		wire.Bind(new(service.GroupService), new(*service.GroupServiceImpl)),
+		wire.Bind(new(service.LikeService), new(*service.LikeServiceImpl)),
 		wire.Bind(new(dao.UserDAO), new(*dao.UserDAOImpl)),
 		wire.Bind(new(dao.GoalDAO), new(*dao.GoalDAOImpl)),
 		wire.Bind(new(dao.SloganDAO), new(*dao.SloganDAOImpl)),
@@ -38,6 +39,7 @@ func InitApp(ConfigPath string) (*route.App, error) {
 		wire.Bind(new(dao.EmailCodeDAO), new(*dao.EmailCodeDAOImpl)),
 		wire.Bind(new(dao.GroupDAO), new(*dao.GroupDAOImpl)),
 		wire.Bind(new(dao.ChatDAO), new(*dao.ChatDAOImpl)),
+		wire.Bind(new(dao.LikeDAO), new(*dao.LikeDAOImpl)),
 	)
 	return &route.App{}, nil
 }

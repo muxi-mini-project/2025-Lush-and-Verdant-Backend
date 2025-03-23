@@ -3,6 +3,7 @@ package service
 import (
 	"2025-Lush-and-Verdant-Backend/api/request"
 	"2025-Lush-and-Verdant-Backend/api/response"
+	"2025-Lush-and-Verdant-Backend/model"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,4 +17,5 @@ type UserService interface {
 	SendEmail(*gin.Context) error
 	GetUserInfoById(idStr string) (*response.User, error)
 	UpdateUserInfo(user *request.UserUpdate) error
+	RandUser() (*model.User, error)
 }

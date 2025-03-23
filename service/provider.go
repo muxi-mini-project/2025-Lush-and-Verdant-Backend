@@ -9,4 +9,5 @@ var ProviderSet = wire.NewSet(
 	NewImageServiceImpl,
 	NewChatServiceImpl,
 	NewGroupServiceImpl,
+	NewLikeServiceImpl,
 )

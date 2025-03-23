@@ -28,5 +28,6 @@ func (u *UserSvc) NewUserGroup(r *gin.Engine) {
 		userGroup.POST("/cancel", u.uc.Cancel)
 		userGroup.GET("/info/:id", u.uc.GetUserInfoById)
 		userGroup.POST("/update", u.uc.UpdateUserInfo)
+		userGroup.GET("/rand", u.uc.RandUser)
 	}
 }
