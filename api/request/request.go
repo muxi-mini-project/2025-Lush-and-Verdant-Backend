@@ -100,3 +100,9 @@ type GroupMember struct {
 	GroupId string `json:"group_id"`
 	UserId  string `json:"user_id"`
 }
+
+type ForestLikeReq struct {
+	From   string `json:"from"`
+	To     string `json:"to"`
+	Action string `json:"action"`
+}

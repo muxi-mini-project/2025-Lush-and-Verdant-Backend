@@ -84,3 +84,11 @@ type Message struct {
 type Messages struct {
 	Messages []Message `json:"messages"`
 }
+
+type Likes struct {
+	NUms string `json:"nums"`
+}
+
+type RandUserId struct {
+	UserID string `json:"id"`
+}
