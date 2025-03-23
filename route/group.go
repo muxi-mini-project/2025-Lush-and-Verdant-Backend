@@ -7,12 +7,14 @@ import (
 )
 
 type GroupSve struct {
-	gc *controller.GroupController
+	gc  *controller.GroupController
+	jwt *middleware.JwtClient
 }
 
-func NewGroupSve(gc *controller.GroupController) *GroupSve {
+func NewGroupSve(gc *controller.GroupController, jwt *middleware.JwtClient) *GroupSve {
 	return &GroupSve{
-		gc: gc,
+		gc:  gc,
+		jwt: jwt,
 	}
 }
 
@@ -20,6 +22,7 @@ func (g *GroupSve) Group(r *gin.Engine) {
 	r.Use(middleware.Cors())
 	group := r.Group("/group")
 	{
+		group.Use(g.jwt.AuthMiddleware())
 		group.POST("/create", g.gc.CreateGroup)
 		group.POST("/update", g.gc.UpdateGroup)
 		group.POST("/delete", g.gc.DeleteGroup)

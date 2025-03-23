@@ -21,8 +21,9 @@ func NewGoalSvc(gc *controller.GoalController, jwt *middleware.JwtClient) *GoalS
 func (g *GoalSvc) GoalGroup(r *gin.Engine) {
 	r.Use(middleware.Cors())
 
-	Goal := r.Group("/goal").Use(g.jwt.AuthMiddleware())
+	Goal := r.Group("/goal")
 	{
+		Goal.Use(g.jwt.AuthMiddleware())
 		Goal.POST("/GetGoal", g.gc.GetGoal)
 		Goal.POST("/MakeGoal", g.gc.PostGoal)
 		Goal.PUT("/UpdateGoal/:task_id", g.gc.UpdateTask)

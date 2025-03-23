@@ -12,9 +12,10 @@ type App struct {
 	is  *ImageSvc
 	gsv *GroupSve
 	cs  *ChatSve
+	ls  *LikeSvc
 }
 
-func NewApp(us *UserSvc, ss *SloganSvc, gs *GoalSvc, is *ImageSvc, gsv *GroupSve, cs *ChatSve) *App {
+func NewApp(us *UserSvc, ss *SloganSvc, gs *GoalSvc, is *ImageSvc, gsv *GroupSve, cs *ChatSve, ls *LikeSvc) *App {
 	r := gin.Default()
 	us.NewUserGroup(r)
 	ss.SloganGroup(r)
@@ -22,6 +23,7 @@ func NewApp(us *UserSvc, ss *SloganSvc, gs *GoalSvc, is *ImageSvc, gsv *GroupSve
 	is.ImageGroup(r)
 	gsv.Group(r)
 	cs.ChatGroup(r)
+	ls.LikeGroup(r)
 
 	return &App{
 		r:   r,
@@ -31,6 +33,7 @@ func NewApp(us *UserSvc, ss *SloganSvc, gs *GoalSvc, is *ImageSvc, gsv *GroupSve
 		is:  is,
 		gsv: gsv,
 		cs:  cs,
+		ls:  ls,
 	}
 }
 

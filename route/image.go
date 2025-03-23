@@ -20,10 +20,10 @@ func NewImageSvc(ic *controller.ImageController, jwt *middleware.JwtClient) *Ima
 
 func (i *ImageSvc) ImageGroup(r *gin.Engine) {
 	r.Use(middleware.Cors())
-	r.Use(i.jwt.AuthMiddleware())
 	r.GET("/get_token", i.ic.GetUpToken)
 	userImage := r.Group("/image/user")
 	{
+		userImage.Use(i.jwt.AuthMiddleware())
 		userImage.GET("/get/:id", i.ic.GetUserImage)
 		userImage.GET("/history/:id", i.ic.GetUserAllImage)
 		userImage.PUT("/update", i.ic.UpdateUserImage)
@@ -31,6 +31,7 @@ func (i *ImageSvc) ImageGroup(r *gin.Engine) {
 
 	group := r.Group("/image/group")
 	{
+		group.Use(i.jwt.AuthMiddleware())
 		group.GET("/:id", i.ic.GetGroupImage)
 		group.GET("/history/:id", i.ic.GetGroupAllImage)
 		group.PUT("/update", i.ic.UpdateGroupImage)
