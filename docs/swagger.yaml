@@ -1470,6 +1470,23 @@ paths:
       summary: 游客登录
       tags:
       - 用户
+  /user/rand:
+    get:
+      description: 随机一个用户id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 随机一个用户id成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 随机一个用户id失败
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 随机一个用户id
+      tags:
+      - 用户
   /user/register:
     post:
       consumes:

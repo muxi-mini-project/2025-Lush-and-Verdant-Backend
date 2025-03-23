@@ -21,6 +21,7 @@ type UserDAO interface {
 	UpdatePassword(email string, password string) error
 	UpdateUserEmail(email *model.Email) error
 	DeleteUser(email string, user *model.User) error
+	RandUser() (*model.User, error)
 }
 
 type UserDAOImpl struct {
@@ -164,4 +165,14 @@ func (dao *UserDAOImpl) UpdateUserEmailById(id uint, email string) error {
 		return fmt.Errorf("修改邮箱失败")
 	}
 	return nil
+}
+
+// 随机一个用户
+func (dao *UserDAOImpl) RandUser() (*model.User, error) {
+	var user model.User
+	result := dao.db.Model(&user).Order("rand()").First(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
 }

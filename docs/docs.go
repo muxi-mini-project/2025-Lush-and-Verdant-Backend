@@ -1943,6 +1943,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/rand": {
+            "get": {
+                "description": "随机一个用户id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户"
+                ],
+                "summary": "随机一个用户id",
+                "responses": {
+                    "200": {
+                        "description": "随机一个用户id成功",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "随机一个用户id失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/user/register": {
             "post": {
                 "description": "通过邮箱和密码注册新用户",

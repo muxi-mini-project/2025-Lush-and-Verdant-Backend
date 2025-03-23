@@ -4,6 +4,7 @@ import (
 	"2025-Lush-and-Verdant-Backend/api/request"
 	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/service"
+	"2025-Lush-and-Verdant-Backend/tool"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -159,4 +160,29 @@ func (uc *UserController) UpdateUserInfo(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "修改成功"})
+}
+
+// RandUser 随机一个用户id
+// @Summary 随机一个用户id
+// @Description 随机一个用户id
+// @Tags 用户
+// @Produce json
+// @Success 200 {object} response.Response "随机一个用户id成功"
+// @Failure 400 {object} response.Response "随机一个用户id失败"
+// @Router /user/rand [get]
+func (uc *UserController) RandUser(c *gin.Context) {
+	user, err := uc.usr.RandUser()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: err.Error()})
+		return
+	}
+	userId := tool.UintToString(user.ID)
+	randUser := response.RandUserId{
+		UserID: userId,
+	}
+	c.JSON(http.StatusOK, response.Response{
+		Code:    200,
+		Message: "获取成功",
+		Data:    randUser,
+	})
 }
