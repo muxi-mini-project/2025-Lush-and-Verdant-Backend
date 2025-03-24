@@ -28,8 +28,10 @@ func (g *GoalSvc) GoalGroup(r *gin.Engine) {
 		Goal.POST("/MakeGoal", g.gc.PostGoal)
 		Goal.PUT("/UpdateGoal/:task_id", g.gc.UpdateTask)
 		Goal.GET("/HistoricalGoal", g.gc.HistoricalGoal)
+		Goal.GET("UsersGoal/:user_id", g.gc.UsersGoal)
 		Goal.DELETE("/DeleteGoal/:task_id", g.gc.DeleteTask)
 		Goal.GET("/CheckTask/:task_id", g.gc.CheckTask)
 		Goal.POST("/MakeGoals", g.gc.PostGoals)
+		Goal.GET("/count/:user_id", g.gc.GetCompletedTasksCount)
 	}
 }

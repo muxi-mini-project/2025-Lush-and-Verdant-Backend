@@ -254,7 +254,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/goal/DeleteGoal/{goal_id}": {
+        "/goal/DeleteGoal/{task_id}": {
             "delete": {
                 "description": "用户删除指定任务",
                 "consumes": [
@@ -566,6 +566,103 @@ const docTemplate = `{
                         "description": "解析失败",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "用户未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/goal/UsersGoal/{user_id}": {
+            "get": {
+                "description": "用户获取目标列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "目标管理"
+                ],
+                "summary": "查询用户目标",
+                "responses": {
+                    "200": {
+                        "description": "请求成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.TaskWithChecks"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "用户未授权",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/goal/count/{user_id}": {
+            "get": {
+                "description": "获取用户每个日期下已完成任务的数量",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "目标管理"
+                ],
+                "summary": "每日完成统计",
+                "responses": {
+                    "200": {
+                        "description": "成功获取数据",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.CountResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "401": {
@@ -2306,6 +2403,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "device_num": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.CountResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "date": {
                     "type": "string"
                 }
             }

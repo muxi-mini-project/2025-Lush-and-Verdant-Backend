@@ -185,6 +185,34 @@ func (mc *GoalController) HistoricalGoal(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "请求成功", Data: goals})
 }
 
+// UsersGoal 查询用户目标
+// @Summary 查询用户目标
+// @Description 用户获取目标列表
+// @Tags 目标管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response{data=response.TaskWithChecks} "请求成功"
+// @Failure 401 {object} response.Response "用户未授权"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /goal/UsersGoal/{user_id} [get]
+func (mc *GoalController) UsersGoal(c *gin.Context) {
+	userIDStr := c.Param("user_id")
+	userID, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "无效的用户ID"})
+		fmt.Println(err)
+		return
+	}
+
+	goals, err := mc.gsr.HistoricalGoal(uint(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取历史目标失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "请求成功", Data: goals})
+}
+
 // DeleteTask 删除任务
 // @Summary 删除任务
 // @Description 用户删除指定任务
@@ -195,7 +223,7 @@ func (mc *GoalController) HistoricalGoal(c *gin.Context) {
 // @Success 200 {object} response.Response "任务删除成功"
 // @Failure 401 {object} response.Response "用户未授权"
 // @Failure 500 {object} response.Response "服务器错误"
-// @Router /goal/DeleteGoal/{goal_id} [delete]
+// @Router /goal/DeleteGoal/{task_id} [delete]
 func (mc *GoalController) DeleteTask(c *gin.Context) {
 	taskIDStr := c.Param("task_id")
 
@@ -320,4 +348,32 @@ func (mc *GoalController) PostGoals(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "保存成功", Data: responseData})
+}
+
+// GetCompletedTasksCount 获取用户每日完成任务数
+// @Summary 每日完成统计
+// @Description 获取用户每个日期下已完成任务的数量
+// @Tags 目标管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response{data=[]response.CountResponse} "成功获取数据"
+// @Failure 401 {object} response.Response "用户未授权"
+// @Failure 500 {object} response.Response "服务器错误"
+// @Router /goal/count/{user_id} [get]
+func (mc *GoalController) GetCompletedTasksCount(c *gin.Context) {
+	userIDStr := c.Param("user_id")
+	userID, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "无效的用户ID"})
+		fmt.Println(err)
+		return
+	}
+
+	counts, err := mc.gsr.GetCompletedTaskCount(uint(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "获取数据失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "获取成功", Data: counts})
 }

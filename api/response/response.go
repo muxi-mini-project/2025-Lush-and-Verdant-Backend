@@ -92,3 +92,8 @@ type Likes struct {
 type RandUserId struct {
 	UserID string `json:"id"`
 }
+
+type CountResponse struct {
+	Date  string `json:"date"`
+	Count int    `json:"count"`
+}

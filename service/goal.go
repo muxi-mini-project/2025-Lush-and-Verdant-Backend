@@ -16,6 +16,7 @@ type GoalService interface {
 	HistoricalGoal(userID uint) (map[string][]response.TaskWithChecks, error)
 	DeleteTask(userID uint, taskID uint) error
 	CheckTask(userID uint, taskID uint) (int, error)
+	GetCompletedTaskCount(userID uint) ([]response.CountResponse, error)
 }
 
 type GoalServiceImpl struct {
@@ -194,4 +195,21 @@ func (gsr *GoalServiceImpl) PostGoals(userID uint, req request.PostGoalRequests)
 	}
 
 	return newGoals, nil
+}
+
+func (gsr *GoalServiceImpl) GetCompletedTaskCount(userID uint) ([]response.CountResponse, error) {
+	countMap, err := gsr.GoalDao.GetCompletedTaskCount(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var responseList []response.CountResponse
+	for date, count := range countMap {
+		responseList = append(responseList, response.CountResponse{
+			Date:  date,
+			Count: count,
+		})
+	}
+
+	return responseList, nil
 }

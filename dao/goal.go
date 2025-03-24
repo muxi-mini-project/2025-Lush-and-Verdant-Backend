@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/model"
 	"fmt"
 	"gorm.io/gorm"
@@ -19,6 +20,7 @@ type GoalDAO interface {
 	DeleteTasks(goalId uint, UserId uint) error
 
 	CountCompletedTaskByGoal(goalID uint) (int, error)
+	GetCompletedTaskCount(userID uint) (map[string]int, error)
 	GetTaskByID(taskID uint) (*model.Task, error)
 	DeleteTaskByID(taskID uint) error
 }
@@ -121,6 +123,25 @@ func (dao *GoalDAOImpl) CountCompletedTaskByGoal(goalID uint) (int, error) {
 		return 0, fmt.Errorf("统计完成任务失败:%v", err)
 	}
 	return int(count), nil
+}
+
+// 获取用户日期完成任务数量
+func (dao *GoalDAOImpl) GetCompletedTaskCount(userID uint) (map[string]int, error) {
+	var results []response.CountResponse
+
+	// 联表查询：按日期分组统计已完成任务数
+	err := dao.db.Model(&model.Task{}).Select("goals.date AS date,COUNT(tasks.id) AS count").Joins("JOIN goals ON tasks.goal_id = goals.id").Where("goals.user_id = ? AND tasks.completed = ?", userID, true).Group("goals.date").Scan(&results).Error
+	if err != nil {
+		return nil, fmt.Errorf("统计失败:%v", err)
+	}
+
+	// 转换为map
+	countMap := make(map[string]int)
+	for _, result := range results {
+		countMap[result.Date] = result.Count
+	}
+
+	return countMap, nil
 }
 
 // 根据ID获取任务
