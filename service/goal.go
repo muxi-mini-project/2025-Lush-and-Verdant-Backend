@@ -91,16 +91,21 @@ func (gsr *GoalServiceImpl) HistoricalGoal(userID uint) (map[string][]response.T
 
 	goalMap := make(map[string][]response.TaskWithChecks)
 	for _, goal := range goals {
-		tasks := make([]response.TaskWithChecks, 0)
-		for _, task := range goal.Tasks {
-			tasks = append(tasks, response.TaskWithChecks{
+		tasks := make([]response.TaskWithChecks, len(goal.Tasks))
+		for i, task := range goal.Tasks {
+			tasks[i] = response.TaskWithChecks{
 				TaskID:    strconv.Itoa(int(task.ID)),
 				Title:     task.Title,
 				Details:   task.Details,
 				Completed: task.Completed,
-			})
+			}
 		}
-		goalMap[goal.Date] = tasks
+
+		if existingTasks, exists := goalMap[goal.Date]; exists {
+			goalMap[goal.Date] = append(existingTasks, tasks...)
+		} else {
+			goalMap[goal.Date] = tasks
+		}
 	}
 
 	return goalMap, nil

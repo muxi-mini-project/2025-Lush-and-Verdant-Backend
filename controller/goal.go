@@ -237,7 +237,7 @@ func (mc *GoalController) DeleteTask(c *gin.Context) {
 // @Success 200 {object} response.Response{data=response.DailyCount} "任务检查成功"
 // @Failure 401 {object} response.Response "用户未授权"
 // @Failure 500 {object} response.Response "服务器错误"
-// @Router /goal/CheckTask/{task_id} [post]
+// @Router /goal/CheckTask/{task_id} [get]
 func (mc *GoalController) CheckTask(c *gin.Context) {
 	taskIDStr := c.Param("task_id")
 	taskID, err := strconv.ParseUint(taskIDStr, 10, 64)

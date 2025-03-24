@@ -67,7 +67,6 @@ func InitApp(ConfigPath string) (*route.App, error) {
 	kafkaConfig := config.NewKafkaConfig(viperSetting)
 	likeDAOImpl := dao.NewLikeDAOImpl(redisClient)
 	likeServiceImpl := service.NewLikeServiceImpl(kafkaConfig, likeDAOImpl)
-	go likeServiceImpl.StartConsume()
 	likeController := controller.NewLikeController(likeServiceImpl)
 	likeSvc := route.NewLikeSvc(likeController, jwtClient)
 	app := route.NewApp(userSvc, sloganSvc, goalSvc, imageSvc, groupSve, chatSve, likeSvc)

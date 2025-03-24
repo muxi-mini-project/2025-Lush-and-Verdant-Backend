@@ -199,7 +199,7 @@ const docTemplate = `{
             }
         },
         "/goal/CheckTask/{task_id}": {
-            "post": {
+            "get": {
                 "description": "用户检查指定任务",
                 "consumes": [
                     "application/json"
