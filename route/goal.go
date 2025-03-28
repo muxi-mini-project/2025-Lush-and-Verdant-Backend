@@ -7,23 +7,31 @@ import (
 )
 
 type GoalSvc struct {
-	gc *controller.GoalController
+	gc  *controller.GoalController
+	jwt *middleware.JwtClient
 }
 
-func NewGoalSvc(gc *controller.GoalController) *GoalSvc {
+func NewGoalSvc(gc *controller.GoalController, jwt *middleware.JwtClient) *GoalSvc {
 	return &GoalSvc{
-		gc: gc,
+		gc:  gc,
+		jwt: jwt,
 	}
 }
 
 func (g *GoalSvc) GoalGroup(r *gin.Engine) {
 	r.Use(middleware.Cors())
+
 	Goal := r.Group("/goal")
 	{
-		Goal.GET("/GetGoal", g.gc.GetGoal)
+		Goal.Use(g.jwt.AuthMiddleware())
+		Goal.POST("/GetGoal", g.gc.GetGoal)
 		Goal.POST("/MakeGoal", g.gc.PostGoal)
-		Goal.PUT("/UpdateGoal", g.gc.UpdateGoal)
+		Goal.PUT("/UpdateGoal/:task_id", g.gc.UpdateTask)
 		Goal.GET("/HistoricalGoal", g.gc.HistoricalGoal)
-		Goal.DELETE("/DeleteGoal:task_id", g.gc.DeleteGoal)
+		Goal.GET("UsersGoal/:user_id", g.gc.UsersGoal)
+		Goal.DELETE("/DeleteGoal/:task_id", g.gc.DeleteTask)
+		Goal.GET("/CheckTask/:task_id", g.gc.CheckTask)
+		Goal.POST("/MakeGoals", g.gc.PostGoals)
+		Goal.GET("/count/:user_id", g.gc.GetCompletedTasksCount)
 	}
 }

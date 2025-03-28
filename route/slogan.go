@@ -7,12 +7,14 @@ import (
 )
 
 type SloganSvc struct {
-	uc *controller.SloganController
+	uc  *controller.SloganController
+	jwt *middleware.JwtClient
 }
 
-func NewSloganSvc(uc *controller.SloganController) *SloganSvc {
+func NewSloganSvc(uc *controller.SloganController, jwt *middleware.JwtClient) *SloganSvc {
 	return &SloganSvc{
-		uc: uc,
+		uc:  uc,
+		jwt: jwt,
 	}
 }
 
@@ -21,6 +23,9 @@ func (u *SloganSvc) SloganGroup(r *gin.Engine) {
 	Slogans := r.Group("/slogan")
 	{
 		Slogans.GET("/GetSlogan/:device_num", u.uc.GetSlogan)
-		Slogans.PUT("/ChangeSlogan", u.uc.ChangeSlogan)
+		Slogans.PUT("/ChangeSlogan/:user_id", u.uc.ChangeSlogan)
+
+		Slogans.Use(u.jwt.AuthMiddleware())
+		Slogans.GET("/SearchSlogan", u.uc.SearchSlogan)
 	}
 }

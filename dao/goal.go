@@ -1,24 +1,30 @@
 package dao
 
 import (
+	"2025-Lush-and-Verdant-Backend/api/response"
 	"2025-Lush-and-Verdant-Backend/model"
 	"fmt"
 	"gorm.io/gorm"
 )
 
 type GoalDAO interface {
-	CreatTask(taskData *model.Task) error
-	CreatEvent(eventData *model.Event) error
-	GetTask(taskId uint, userId uint) (*model.Task, error)
-	GetTaskS(taskID string, userId uint) (*model.Task, error)
-	GetTasks(userId uint) ([]*model.Task, error)
-	GetEvent(eventId uint, taskId uint) (*model.Event, error)
-	GetEvents(taskId uint) ([]model.Event, error)
-	UpdateTask(existingTask *model.Task) error
-	UpdateEvent(existingEvent *model.Event) error
-	DeleteTask(task *model.Task) error
-	DeleteEvents(taskId uint) error
+	CreateGoal(goal *model.Goal) error
+	UpdateGoal(goal *model.Goal) error
+	GetGoals(userId uint) ([]model.Goal, error)
+	GetGoal(goalId uint, userId uint) (*model.Goal, error)
+	DeleteGoal(goalId uint, userId uint) error
+
+	CreateTask(task *model.Task) error
+	UpdateTask(task *model.Task) error
+	GetTasks(goalId uint) ([]model.Task, error)
+	DeleteTasks(goalId uint, UserId uint) error
+
+	CountCompletedTaskByGoal(goalID uint) (int, error)
+	GetCompletedTaskCount(userID uint) (map[string]int, error)
+	GetTaskByID(taskID uint) (*model.Task, error)
+	DeleteTaskByID(taskID uint) error
 }
+
 type GoalDAOImpl struct {
 	db *gorm.DB
 }
@@ -29,99 +35,128 @@ func NewGoalDAOImpl(db *gorm.DB) *GoalDAOImpl {
 	}
 }
 
+// 创建目标
+func (dao *GoalDAOImpl) CreateGoal(goal *model.Goal) error {
+	if err := dao.db.Create(goal).Error; err != nil {
+		return fmt.Errorf("目标创建失败:%v", err)
+	}
+	return nil
+}
+
+// 更新目标
+func (dao *GoalDAOImpl) UpdateGoal(goal *model.Goal) error {
+	if err := dao.db.Save(goal).Error; err != nil {
+		return fmt.Errorf("更新目标失败:%v", err)
+	}
+	return nil
+}
+
+// 获取用户的所有目标及其任务
+func (dao *GoalDAOImpl) GetGoals(userId uint) ([]model.Goal, error) {
+	var goals []model.Goal
+	if err := dao.db.Preload("Tasks").Where("user_id = ?", userId).Find(&goals).Error; err != nil {
+		return nil, fmt.Errorf("获取目标失败:%v", err)
+	}
+	return goals, nil
+}
+
+// 根据ID获取某个目标
+func (dao *GoalDAOImpl) GetGoal(goalId uint, userId uint) (*model.Goal, error) {
+	var goal model.Goal
+	if err := dao.db.Preload("Tasks").Where("id = ? AND user_id = ?", goalId, userId).First(&goal).Error; err != nil {
+		return nil, fmt.Errorf("目标不存在")
+	}
+	return &goal, nil
+}
+
+// 删除目标及其关联的任务
+func (dao *GoalDAOImpl) DeleteGoal(goalId uint, userId uint) error {
+	if err := dao.db.Where("id = ? AND user_id = ?", goalId, userId).Delete(&model.Goal{}).Error; err != nil {
+		return fmt.Errorf("目标删除失败:%v", err)
+	}
+
+	// 删除该目标下的所有任务
+	if err := dao.DeleteTasks(goalId, userId); err != nil {
+		return fmt.Errorf("任务删除失败:%v", err)
+	}
+
+	return nil
+}
+
 // 创建任务
-func (dao *GoalDAOImpl) CreatTask(taskData *model.Task) error {
-	if err := dao.db.Create(&taskData).Error; err != nil {
-		return fmt.Errorf("任务保存失败")
+func (dao *GoalDAOImpl) CreateTask(task *model.Task) error {
+	if err := dao.db.Create(task).Error; err != nil {
+		return fmt.Errorf("任务创建失败:%v", err)
 	}
 	return nil
 }
 
-// 创建事件
-func (dao *GoalDAOImpl) CreatEvent(eventData *model.Event) error {
-	if err := dao.db.Create(&eventData).Error; err != nil {
-		return fmt.Errorf("事件保存失败")
+// 更新任务
+func (dao *GoalDAOImpl) UpdateTask(task *model.Task) error {
+	if err := dao.db.Save(task).Error; err != nil {
+		return fmt.Errorf("更新任务失败:%v", err)
 	}
 	return nil
 }
 
-// 根据userId获取tasks
-func (dao *GoalDAOImpl) GetTasks(userId uint) ([]*model.Task, error) {
-	var tasks []*model.Task
-	if err := dao.db.Where("user_id = ?", userId).Find(&tasks).Error; err != nil {
-		return nil, fmt.Errorf("获取目标失败")
+// 获取某个Goal下的所有任务
+func (dao *GoalDAOImpl) GetTasks(goalId uint) ([]model.Task, error) {
+	var tasks []model.Task
+	if err := dao.db.Where("goal_id = ?", goalId).Find(&tasks).Error; err != nil {
+		return nil, fmt.Errorf("获取任务失败:%v", err)
 	}
 	return tasks, nil
 }
 
-// 根据task_id 和 user_id 查询任务
-func (dao *GoalDAOImpl) GetTask(taskId uint, userId uint) (*model.Task, error) {
-	var existingTask model.Task
-	if err := dao.db.Where("id = ? AND user_id = ?", taskId, userId).First(&existingTask).Error; err != nil {
-		return nil, fmt.Errorf("未找到该任务")
+// 删除某个Goal下的所有任务
+func (dao *GoalDAOImpl) DeleteTasks(goalId uint, userId uint) error {
+	if err := dao.db.Exec("DELETE t FROM tasks t INNER JOIN goals g ON t.goal_id = g.id WHERE g.id = ? AND g.user_id = ?", goalId, userId).Error; err != nil {
+		return fmt.Errorf("任务删除失败:%v", err)
 	}
-	return &existingTask, nil
+	return nil
 }
 
-// todo task_id 为什么有时候是string、有时候是uint
-// 因为string task_id
-func (dao *GoalDAOImpl) GetTaskS(taskID string, userId uint) (*model.Task, error) {
+// 获取完成数量
+func (dao *GoalDAOImpl) CountCompletedTaskByGoal(goalID uint) (int, error) {
+	var count int64
+	if err := dao.db.Model(&model.Task{}).Where("goal_id = ? AND completed = ?", goalID, true).Count(&count).Error; err != nil {
+		return 0, fmt.Errorf("统计完成任务失败:%v", err)
+	}
+	return int(count), nil
+}
+
+// 获取用户日期完成任务数量
+func (dao *GoalDAOImpl) GetCompletedTaskCount(userID uint) (map[string]int, error) {
+	var results []response.CountResponse
+
+	// 联表查询：按日期分组统计已完成任务数
+	err := dao.db.Model(&model.Task{}).Select("goals.date AS date,COUNT(tasks.id) AS count").Joins("JOIN goals ON tasks.goal_id = goals.id").Where("goals.user_id = ? AND tasks.completed = ?", userID, true).Group("goals.date").Scan(&results).Error
+	if err != nil {
+		return nil, fmt.Errorf("统计失败:%v", err)
+	}
+
+	// 转换为map
+	countMap := make(map[string]int)
+	for _, result := range results {
+		countMap[result.Date] = result.Count
+	}
+
+	return countMap, nil
+}
+
+// 根据ID获取任务
+func (dao *GoalDAOImpl) GetTaskByID(taskID uint) (*model.Task, error) {
 	var task model.Task
-	// 查找该用户的任务
-	if err := dao.db.Where("id = ? AND user_id = ?", taskID, userId).First(&task).Error; err != nil {
-		return nil, fmt.Errorf("未找到该任务")
+	if err := dao.db.Where("id = ?", taskID).First(&task).Error; err != nil {
+		return nil, fmt.Errorf("任务不存在")
 	}
 	return &task, nil
 }
 
-// 根据event_id 和 even_taskID 来查找event事件
-func (dao *GoalDAOImpl) GetEvent(eventId uint, taskId uint) (*model.Event, error) {
-	var existingEvent model.Event
-	if err := dao.db.Where("id = ? AND task_id = ?", eventId, taskId).First(&existingEvent).Error; err != nil {
-		return nil, fmt.Errorf("未找到该事件")
-	}
-	return &existingEvent, nil
-}
-
-// 根据taskId查询所有事件 //todo 这里没有用指针类型来传输数据
-func (dao *GoalDAOImpl) GetEvents(taskId uint) ([]model.Event, error) {
-	var events []model.Event
-	if err := dao.db.Where("task_id = ?", taskId).Find(&events).Error; err != nil {
-		return nil, fmt.Errorf("获取事件失败")
-	}
-	return events, nil
-}
-
-// 更新任务
-func (dao *GoalDAOImpl) UpdateTask(existingTask *model.Task) error {
-	if err := dao.db.Save(&existingTask).Error; err != nil {
-		return fmt.Errorf("任务更新失败")
-	}
-	return nil
-}
-
-// 更新事件
-func (dao *GoalDAOImpl) UpdateEvent(existingEvent *model.Event) error {
-	if err := dao.db.Save(&existingEvent).Error; err != nil {
-		return fmt.Errorf("事件更新失败")
-	}
-	return nil
-}
-
-// 删除任务
-func (dao *GoalDAOImpl) DeleteTask(task *model.Task) error {
-	// 删除任务
-	if err := dao.db.Delete(&task).Error; err != nil {
-		return fmt.Errorf("删除任务失败")
-	}
-	return nil
-}
-
-// 根据task_id(uint)来删除events
-func (dao *GoalDAOImpl) DeleteEvents(taskId uint) error {
-	// 删除该任务下的所有事件
-	if err := dao.db.Where("task_id = ?", taskId).Delete(&model.Event{}).Error; err != nil {
-		return fmt.Errorf("删除事件失败")
+// 根据ID删除任务
+func (dao *GoalDAOImpl) DeleteTaskByID(taskID uint) error {
+	if err := dao.db.Where("id = ?", taskID).Delete(&model.Task{}).Error; err != nil {
+		return fmt.Errorf("删除任务失败: %v", err)
 	}
 	return nil
 }

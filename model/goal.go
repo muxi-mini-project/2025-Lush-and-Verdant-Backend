@@ -1,34 +1,30 @@
 package model
 
 import (
+	"gorm.io/gorm"
 	"time"
 )
 
-type CustomTime time.Time
-
-// Event 结构体表示单个事件
-type Event struct {
-	ID          uint       `json:"id" gorm:"primaryKey"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	StartTime   CustomTime `json:"start_time"`
-	EndTime     CustomTime `json:"end_time"`
-	TaskID      uint       `json:"task_id"` // 外键，关联任务
+// Goal 结构体，包含日期和多个任务
+type Goal struct {
+	gorm.Model
+	UserID uint   `gorm:"index:idx_user_date"` // 关联User
+	Date   string `gorm:"index:idx_user_date"` // 日期
+	Tasks  []Task `gorm:"foreignkey:GoalID"`   // 任务数组
 }
 
-// Task  结构体表示任务，包含多个事件
+// Task 结构体，表示具体任务
 type Task struct {
-	ID          uint       `json:"id" gorm:"primaryKey"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	StartTime   CustomTime `json:"start_time"`
-	EndTime     CustomTime `json:"end_time"`
-	UserID      uint       `json:"user_id"`      // 外键，关联用户
-	Events      []Event    `json:"events"`       // 任务下的多个事件
-	IsCompleted bool       `json:"is_completed"` // 检测任务是否完成
+	gorm.Model
+	GoalID    uint   `gorm:"not null"` // 关联Goal
+	Title     string `gorm:"varchar(255);not null"`
+	Details   string `gorm:"text;not null"`
+	Completed bool   `gorm:"default:false"`
 }
 
-// TasksData 是最外层结构体，包含多个任务
-type TasksData struct {
-	Tasks []Task `json:"tasks"` // 一个任务列表
+type TaskCheck struct {
+	gorm.Model
+	TaskID    uint      `gorm:"not null"`
+	UserID    uint      `gorm:"not null"`
+	CheckedAt time.Time `gorm:"not null"`
 }

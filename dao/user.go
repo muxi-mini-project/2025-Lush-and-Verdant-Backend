@@ -16,9 +16,12 @@ type UserDAO interface {
 	CreateUserEmail(email *model.Email) error
 	UpdateUser(user *model.User) error
 	UpdateUserName(device string, username string) error
+	UpdateUserNameById(id uint, name string) error
+	UpdateUserEmailById(id uint, email string) error
 	UpdatePassword(email string, password string) error
 	UpdateUserEmail(email *model.Email) error
 	DeleteUser(email string, user *model.User) error
+	RandUser() (*model.User, error)
 }
 
 type UserDAOImpl struct {
@@ -42,7 +45,7 @@ func (dao *UserDAOImpl) GetUserById(id uint) (*model.User, error) {
 // 通过邮箱查找是否有用户，并返回用户
 func (dao *UserDAOImpl) CheckUserByEmail(addr string) (*model.User, bool) {
 	var user model.User
-	result := dao.db.Where("mail = ?", addr).Find(&user)
+	result := dao.db.Where("email = ?", addr).Find(&user)
 	if result.RowsAffected == 0 {
 		return &user, false
 	} else {
@@ -53,7 +56,7 @@ func (dao *UserDAOImpl) CheckUserByEmail(addr string) (*model.User, bool) {
 // 检查是否发送验证码，并返回email
 func (dao *UserDAOImpl) CheckSendEmail(addr string) (*model.Email, bool) {
 	var email model.Email
-	result := dao.db.Where("mail = ?", addr).First(&email)
+	result := dao.db.Where("email = ?", addr).First(&email)
 	if result.RowsAffected == 0 { //用户未发送验证码
 		return &email, false
 	} else {
@@ -143,4 +146,33 @@ func (dao *UserDAOImpl) CreateUserEmail(email *model.Email) error {
 		return fmt.Errorf("更新验证码失败%s", result.Error.Error())
 	}
 	return nil
+}
+
+// 通过用户id修改用户名
+func (dao *UserDAOImpl) UpdateUserNameById(id uint, name string) error {
+	result := dao.db.Model(&model.User{}).Where("id = ?", id).Update("username", name)
+	if result.Error != nil {
+		return fmt.Errorf("修改失败")
+	}
+	return nil
+}
+
+// 通过用户id修改邮箱
+func (dao *UserDAOImpl) UpdateUserEmailById(id uint, email string) error {
+
+	result := dao.db.Model(&model.User{}).Where("id = ?", id).Update("email", email)
+	if result.Error != nil {
+		return fmt.Errorf("修改邮箱失败")
+	}
+	return nil
+}
+
+// 随机一个用户
+func (dao *UserDAOImpl) RandUser() (*model.User, error) {
+	var user model.User
+	result := dao.db.Model(&user).Order("rand()").First(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
 }

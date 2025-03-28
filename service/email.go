@@ -12,83 +12,64 @@ import (
 )
 
 func (usr *UserServiceImpl) SendEmail(c *gin.Context) error {
-
 	var email request.Email
 	if err := c.ShouldBindJSON(&email); err != nil {
-		c.JSON(http.StatusBadRequest, response.Response{Error: "获取邮箱失败"})
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "获取邮箱失败"})
 		return err
 	}
 
-	//生成验证码
+	// 生成验证码
 	code := tool.GenerateCode()
-	//先查询验证码的状态
-	emailCheck, ok := usr.Dao.CheckSendEmail(email.Email)
-	if ok { //有验证码
-		if emailCheck.Status { //此时是有效的，重新发送,并修改验证码
-			err := usr.mail.SendEmailByQQEmail(email.Email, code)
-			if err != nil {
-				return fmt.Errorf("发送失败")
-			}
-			//更新验证码
-			emailCheck.Code = code
-			err = usr.Dao.UpdateUserEmail(emailCheck)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
-				return err
-			}
 
-		} else { //此时是无效的，重新发送，并更新验证码及其状态
-			err := usr.mail.SendEmailByQQEmail(email.Email, code)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: "发送失败"})
-				return fmt.Errorf("发送失败")
-			}
-
-			emailCheck.Code = code
-			emailCheck.Status = true
-			err = usr.Dao.UpdateUserEmail(emailCheck)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
-				return err
-			}
-
-		}
-	} else { //没有验证码
-		emailCheck.Status = true
-		emailCheck.Code = code
-		emailCheck.Email = email.Email
-		err := usr.mail.SendEmailByQQEmail(email.Email, code)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: "发送失败"})
-			return fmt.Errorf("发送失败")
-		}
-
-		err = usr.Dao.CreateUserEmail(emailCheck)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
-			return err
-		}
+	// 先检查Redis是否有验证码
+	existingCode, err := usr.EmailCodeDAO.GetEmailCode(email.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "查询验证码失败"})
+		return err
 	}
 
-	//因为不管怎么样都重新发送了，所以5分钟后都失效一波
-	//5分钟后删除验证码
-	delay := 5 * time.Minute
-	time.AfterFunc(delay, func() {
-		//先检查状态
-		emailChe, _ := usr.Dao.CheckSendEmail(email.Email)
-		//如果状态是有效的,变成无效的
-		if emailChe.Status {
-			emailChe.Status = false
-			err := usr.Dao.UpdateUserEmail(emailChe)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, response.Response{Error: err.Error()})
-				log.Println("用户%v的验证码状态改变出现错误", emailChe.Email)
-				return
-			}
-		}
-		//状态无效则不做处理
-	})
-	c.JSON(http.StatusOK, response.Response{Message: "发送成功"})
-	return nil
+	if existingCode != code {
+		log.Printf("邮箱%s验证码已存在，覆盖更新", email.Email)
+	}
 
+	// 发送验证码邮件
+	err = usr.mail.SendEmailByQQEmail(email.Email, code)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Response{Code: 400, Message: "发送失败"})
+		return fmt.Errorf("发送失败")
+	}
+
+	// 将验证码存入Redis，过期时间5分钟
+	err = usr.EmailCodeDAO.SetEmailCode(email.Email, code, 5*time.Minute)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Response{Code: 500, Message: "存储验证码失败"})
+		return err
+	}
+
+	c.JSON(http.StatusOK, response.Response{Code: 200, Message: "验证码已发送"})
+	return nil
+}
+
+// 校验验证码
+func (usr *UserServiceImpl) CheckEmailCode(email, inputCode string) bool {
+	// 获取Redis中的验证码
+	storedCode, err := usr.EmailCodeDAO.GetEmailCode(email)
+	if err != nil {
+		log.Printf("Redis查询验证码错误:%v", err)
+		return false
+	}
+
+	// 校验验证码是否正确
+	if storedCode == "" || storedCode == inputCode {
+		log.Printf("邮箱%s验证码错误", email)
+		return false
+	}
+
+	// 校验成功后删除验证码(防止重用)
+	err = usr.EmailCodeDAO.DeleteEmailCode(email)
+	if err != nil {
+		log.Printf("Redis删除验证码失败:%v", err)
+	}
+
+	return true
 }

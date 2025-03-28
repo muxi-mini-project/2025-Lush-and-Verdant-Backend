@@ -2,11 +2,12 @@ package tool
 
 import (
 	"2025-Lush-and-Verdant-Backend/config"
-	"2025-Lush-and-Verdant-Backend/dao"
 	"2025-Lush-and-Verdant-Backend/model"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 
 	"math/rand"
 	"net/smtp"
@@ -14,22 +15,21 @@ import (
 )
 
 type Mail struct {
-	EmailDao dao.EmailDAO
-	cfg      *config.QQConfig
+	RedisClient *redis.Client
+	cfg         *config.QQConfig
 }
 
-func NewMail(emailDao dao.EmailDAO, cfg *config.QQConfig) *Mail {
+func NewMail(redisClient *redis.Client, cfg *config.QQConfig) *Mail {
 	return &Mail{
-		EmailDao: emailDao,
-		cfg:      cfg,
+		RedisClient: redisClient,
+		cfg:         cfg,
 	}
-
 }
 
 // 生成验证码
 func GenerateCode() string {
-	rand.Seed(time.Now().UnixNano()) //以纳米为级别
-	code := rand.Intn(1000000)       //生成6位数的验证码
+	rand.Seed(time.Now().UnixNano()) // 以纳米为级别
+	code := rand.Intn(1000000)       // 生成6位数的验证码
 	return fmt.Sprintf("%06d", code)
 }
 
@@ -105,7 +105,7 @@ func (mail *Mail) SendEmailByQQEmail(to string, code string) error {
 		return fmt.Errorf("消息发送失败: %v", err)
 	}
 
-	return nil
+	return mail.StoreCodeInRedis(to, code)
 }
 
 // 从前端获得email json格式的 //这个暂时没用到
@@ -118,21 +118,55 @@ func GetEmailName(c *gin.Context) (string, bool) {
 	}
 }
 
+// StoreCodeInRedis 存储验证码到Redis
+func (mail *Mail) StoreCodeInRedis(email string, code string) error {
+	ctx := context.Background()
+	key := email
+	expiration := 5 * time.Minute // 设置验证码有效期为5分钟
+
+	err := mail.RedisClient.Set(ctx, key, code, expiration).Err()
+	if err != nil {
+		return fmt.Errorf("存储验证码到Redis失败:%v", err)
+	}
+	return nil
+}
+
+// VerifyCode 校验验证码
+func (mail *Mail) VerifyCode(email string, code string) (bool, error) {
+	ctx := context.Background()
+	key := email
+
+	// 从Redis获取验证码
+	storedCode, err := mail.RedisClient.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return false, fmt.Errorf("验证码不存在或已过期")
+	} else if err != nil {
+		return false, fmt.Errorf("查询Redis失败:%v", err)
+	}
+
+	if storedCode != code {
+		return false, fmt.Errorf("验证码错误")
+	}
+
+	// 删除Redis中的验证码，防止重复使用
+	err = mail.RedisClient.Del(ctx, key).Err()
+	if err != nil {
+		return false, fmt.Errorf("删除验证码失败:%v", err)
+	}
+
+	return true, nil
+}
+
 // 修改验证码状态
 func (mail *Mail) ChangeStatus(addr string) error {
+	ctx := context.Background()
+	key := addr
 
-	email, err := mail.EmailDao.GetEmail(addr)
+	// 删除Redis中的验证码
+	err := mail.RedisClient.Del(ctx, key).Err()
 	if err != nil {
-		return err
+		return fmt.Errorf("删除验证码失败:%v", err)
 	}
-	if email.Status { //有效改为无效
-		email.Status = false
-		err := mail.EmailDao.UpdateEmail(email)
-		if err != nil {
-			return err
-		}
-		return nil
-	} else { //无效的话就return
-		return nil
-	}
+
+	return nil
 }

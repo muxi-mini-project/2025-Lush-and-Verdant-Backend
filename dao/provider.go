@@ -3,9 +3,15 @@ package dao
 import "github.com/google/wire"
 
 var ProviderSet = wire.NewSet(
-	NewDB,
+	MySQLDB,
+	RedisDB,
 	NewUserDAO,
 	NewGoalDAOImpl,
 	NewSloganDAOImpl,
 	NewEmailDAOImpl,
+	NewEmailCodeDAOImpl,
+	NewImageDAO,
+	NewChatDAOImpl,
+	NewGroupDAOImpl,
+	NewLikeDAOImpl,
 )
